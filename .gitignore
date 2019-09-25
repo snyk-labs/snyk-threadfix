@@ -1,0 +1,9 @@
+.idea
+.DS_Store
+*.json
+.pytest_cache
+*.threadfix
+sample-tf-files
+__pycache__
+test*.py
+*bak*
