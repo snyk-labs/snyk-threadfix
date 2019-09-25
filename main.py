@@ -4,7 +4,7 @@ import json
 import snyk
 import hashlib
 import arrow
-from utils import get_token, get_default_token_path, get_snyk_api_headers, validate_token, can_i_mock_utils
+from utils import get_token, get_default_token_path, get_snyk_api_headers, validate_token
 
 snyk_token = None
 client = None
@@ -153,7 +153,7 @@ def create_threadfix_findings_data(org_id, project_id):
                 "CVSSv3": i.CVSSv3,
                 "cvssScore": i.cvssScore,
                 "snyk_source": p.origin,
-                "snyk_project_url": 'https://app.snyk.io/org/%s/project/%s' % (org_id, project_id),  # TODO: should add this to pysnyk
+                "snyk_project_url": p.browseUrl,
                 "snyk_organization": org_id
             },
 

@@ -144,11 +144,11 @@
         },
         "pysnyk": {
             "hashes": [
-                "sha256:74ad03ff30ec75a6625042035ea6ab51029863641aa04e5eb6541221fae10468",
-                "sha256:a28b53f0de06b2d4ce64cc3298ea363cd63103ca5108404b88ec5e3ab848150a"
+                "sha256:13ee906dedd86c0662049b741dd8dabf244e0bb6c3eaf41e0b743bc68a333a0d",
+                "sha256:c5c5bc8a051d55bc5d5cb38360eb29af67d225883b69798058a4fd279eaad1f6"
             ],
             "index": "pypi",
-            "version": "==0.1.2"
+            "version": "==0.1.3"
         },
         "pytest": {
             "hashes": [
