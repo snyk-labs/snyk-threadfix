@@ -4,6 +4,7 @@
 + python3
 + pipenv
 
+## Steps to Run
 ```
 git clone https://github.com/snyk-labs/snyk-threadfix.git
 cd snyk-threadfix
