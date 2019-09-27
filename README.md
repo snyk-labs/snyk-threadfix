@@ -1,6 +1,6 @@
-# threafix-prototype
+# snyk-threadfix
 
-## requirements
+## Requirements
 + python3
 + pipenv
 
