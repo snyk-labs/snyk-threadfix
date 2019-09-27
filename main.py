@@ -46,31 +46,35 @@ def parse_snyk_project_name(project_name):
 
 
 def lookup_project_ids_by_repo_name_py_snyk(org_id, repo_name, origin, branch, target_file):
+    git_repo_project_origins = [
+        'github',
+        'github-enterprise',
+        'gitlab',
+        'bitbucket-cloud',
+        'bitbucket-server',
+        'azure-repos'
+    ]
+
     projects = client.organizations.get(org_id).projects.all()
 
     matching_project_ids = []
 
     for p in projects:
-        if p.origin in ['ecr', 'acr', 'docker-hub']:
-            print('found container image project')
-
-        elif p.origin == 'cli':
-            print('found CLI project')
-
-        else:
+        if p.origin in git_repo_project_origins:
             project_name_details = parse_snyk_project_name(p.name)
 
             if repo_name == project_name_details['repo'] and \
                     (not branch or branch and branch == project_name_details['branch']) and \
                     (not origin or origin and origin == p.origin) and \
                     (not target_file or target_file and target_file == project_name_details['targetFile']):
-                print('found regular project')
-                print(p.name)
-                print(p.id)
-                print(p.origin)
-                print()
+                print('Found project with matching repo name:')
+                print('  %s' % p.name)
+                print('  %s' % p.id)
+                print('  %s\n' % p.origin)
 
                 matching_project_ids.append(p.id)
+        # else:
+        #     print('skipping non git repo project type: %s' % p.origin)
 
     return matching_project_ids
 
@@ -125,7 +129,8 @@ def snyk_identifiers_to_threadfix_mappings(snyk_identifiers_list):
 def create_threadfix_findings_data(org_id, project_id):
     p = client.organizations.get(org_id).projects.get(project_id)
     findings = []
-    target_file = parse_snyk_project_name(p.name)['targetFile']
+    project_meta_data = parse_snyk_project_name(p.name)
+    target_file = project_meta_data['targetFile']
 
     for i in p.vulnerabilities:
         native_id = generate_native_id(org_id, project_id, i.id, i.fromPackages)
@@ -153,6 +158,11 @@ def create_threadfix_findings_data(org_id, project_id):
                 "CVSSv3": i.CVSSv3,
                 "cvssScore": i.cvssScore,
                 "snyk_source": p.origin,
+                "snyk_project_id": project_id,
+                "snyk_project_name": p.name,
+                "snyk_repo": project_meta_data['repo'],
+                "snyk_branch": project_meta_data['branch'],
+                "snyk_target_file": project_meta_data['targetFile'],
                 "snyk_project_url": p.browseUrl,
                 "snyk_organization": org_id
             },
@@ -168,8 +178,10 @@ def create_threadfix_findings_data(org_id, project_id):
 
 
 def write_to_threadfix_file(output_filename, threadfix_json_obj):
+    print('Writing output threadfix file: %s' % output_filename)
     with open(output_filename, 'w') as output_json_file:
-        print(json.dump(threadfix_json_obj, output_json_file, indent=4))
+        json.dump(threadfix_json_obj, output_json_file, indent=4)
+        # print(json.dump(threadfix_json_obj, output_json_file, indent=4))
 
 
 def main(args):
@@ -191,7 +203,7 @@ def main(args):
     client = snyk.SnykClient(snyk_token)
 
     project_ids = lookup_project_ids_by_repo_name_py_snyk(args.orgId, repo_name, origin, branch, target_file)
-    print(project_ids)
+    # print(project_ids)
 
     current_time = arrow.utcnow().replace(microsecond=0)
     current_time_str = current_time.isoformat().replace("+00:00", "Z")
