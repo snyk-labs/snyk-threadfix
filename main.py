@@ -4,10 +4,22 @@ import json
 import snyk
 import hashlib
 import arrow
-from utils import get_token, get_default_token_path, get_snyk_api_headers, validate_token
+from utils import get_token, get_default_token_path, validate_token
 
 snyk_token = None
 client = None
+
+
+class SnykTokenError(Exception):
+    pass
+
+
+class SnykTokenNotFoundError(Exception):
+    pass
+
+
+class SnykTokenInvalidError(Exception):
+    pass
 
 
 def parse_command_line_args(command_line_args):
@@ -16,7 +28,10 @@ def parse_command_line_args(command_line_args):
         "--orgId", type=str, help="The Snyk Organisation Id", required=True
     )
     parser.add_argument(
-        "--repoName", type=str, help="Repo name", required=True
+        "--projectIds", type=str, help="Comma-separated list of Snyk project IDs", required=True
+    )
+    parser.add_argument(
+        "--repoName", type=str, help="Repo name", required=False
     )
     parser.add_argument(
         "--branch", type=str, help="Branch name", required=False
@@ -27,7 +42,21 @@ def parse_command_line_args(command_line_args):
     parser.add_argument(
         "--origin", type=str, help="Origin - ex github, bitbucket-server, cli, etc", required=False
     )
-    return parser.parse_args(command_line_args)
+
+    args = parser.parse_args(command_line_args)
+
+    str_project_ids = args.projectIds
+
+    if not str_project_ids:
+        sys.exit('--projectIds input parameter is required')
+
+    project_ids = str_project_ids.split(',')
+    if len(project_ids) > 0:
+        args.project_ids = project_ids
+    else:
+        sys.exit('--projectIds input parameter is required')
+
+    return args
 
 
 def parse_snyk_project_name(project_name):
@@ -197,13 +226,12 @@ def main(args):
     snyk_token = get_token(snyk_token_path)
     token_is_valid = validate_token(snyk_token)
     if not token_is_valid:
-        print('invalid token')
-        sys.exit('invalid token')
+        raise SnykTokenInvalidError('invalid token')
 
     client = snyk.SnykClient(snyk_token)
 
-    project_ids = lookup_project_ids_by_repo_name_py_snyk(args.orgId, repo_name, origin, branch, target_file)
-    # print(project_ids)
+    # project_ids = lookup_project_ids_by_repo_name_py_snyk(args.orgId, repo_name, origin, branch, target_file)
+    project_ids = args.project_ids
 
     current_time = arrow.utcnow().replace(microsecond=0)
     current_time_str = current_time.isoformat().replace("+00:00", "Z")
