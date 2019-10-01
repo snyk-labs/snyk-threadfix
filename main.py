@@ -4,10 +4,13 @@ import json
 import snyk
 import hashlib
 import arrow
+from sys import stderr
 from utils import get_token, validate_token
+
 
 snyk_token = None
 client = None
+debug = False
 
 
 class SnykTokenError(Exception):
@@ -22,6 +25,12 @@ class SnykTokenInvalidError(Exception):
     pass
 
 
+def log(msg):
+    global debug
+    if debug:
+        print(msg, file=stderr)
+
+
 def parse_command_line_args(command_line_args):
     parser = argparse.ArgumentParser(description="Snyk API Examples")
     parser.add_argument(
@@ -30,6 +39,15 @@ def parse_command_line_args(command_line_args):
     parser.add_argument(
         "--projectIds", type=str, help="Comma-separated list of Snyk project IDs", required=True
     )
+    parser.add_argument('--output', type=str,
+                        help='Optional: name output file to write to (should use .threadfix extension).',
+                        required=False)
+
+    # ('--feature', dest='feature', action='store_true'
+
+    parser.add_argument(
+        "--debug", action='store_true', help="Send additional debug info to stderr", required=False)
+
     parser.add_argument(
         "--repoName", type=str, help="Repo name", required=False
     )
@@ -96,14 +114,11 @@ def lookup_project_ids_by_repo_name_py_snyk(org_id, repo_name, origin, branch, t
                     (not branch or branch and branch == project_name_details['branch']) and \
                     (not origin or origin and origin == p.origin) and \
                     (not target_file or target_file and target_file == project_name_details['targetFile']):
-                print('Found project with matching repo name:')
-                print('  %s' % p.name)
-                print('  %s' % p.id)
-                print('  %s\n' % p.origin)
-
+                log('Found project with matching repo name:')
+                log('  %s' % p.name)
+                log('  %s' % p.id)
+                log('  %s\n' % p.origin)
                 matching_project_ids.append(p.id)
-        # else:
-        #     print('skipping non git repo project type: %s' % p.origin)
 
     return matching_project_ids
 
@@ -207,21 +222,26 @@ def create_threadfix_findings_data(org_id, project_id):
 
 
 def write_to_threadfix_file(output_filename, threadfix_json_obj):
-    print('Writing output threadfix file: %s' % output_filename)
+    log('Writing output threadfix file: %s' % output_filename)
+
     with open(output_filename, 'w') as output_json_file:
         json.dump(threadfix_json_obj, output_json_file, indent=4)
-        # print(json.dump(threadfix_json_obj, output_json_file, indent=4))
+
+
+def write_output_to_stdout(threadfix_json_obj):
+    json.dump(threadfix_json_obj, sys.stdout, indent=4)
 
 
 def main(args):
+    global snyk_token, client, debug
     args = parse_command_line_args(args)
+    debug = args.debug
 
     repo_name = args.repoName
     branch = args.branch or ''
     target_file = args.targetFile or ''
     origin = args.origin or ''
 
-    global snyk_token, client
     snyk_token = get_token()
     token_is_valid = validate_token(snyk_token)
     if not token_is_valid:
@@ -250,11 +270,9 @@ def main(args):
         all_threadfix_findings.extend(threadfix_findings)
 
     threadfix_json_obj['findings'] = all_threadfix_findings
-
-    output_filename = 'snyk-threadfix-%s.threadfix' % current_time_str.replace(':', '.')
-    write_to_threadfix_file(output_filename, threadfix_json_obj)
-
-    print('done')
+    write_output_to_stdout(threadfix_json_obj)
+    if args.output:
+        write_to_threadfix_file(args.output, threadfix_json_obj)
 
 
 if __name__ == '__main__':
