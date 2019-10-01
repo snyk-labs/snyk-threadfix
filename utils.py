@@ -1,6 +1,7 @@
 from pathlib import Path
 import requests
 import json
+import os
 
 
 def get_default_token_path():
@@ -9,7 +10,7 @@ def get_default_token_path():
     return default_token_path
 
 
-def get_token(token_file_path):
+def get_token_from_file(token_file_path):
     path = token_file_path
 
     try:
@@ -25,6 +26,18 @@ def get_token(token_file_path):
         print("Snyk auth token file is not properly formed: %s" % path)
         print("Run `snyk auth` (see https://github.com/snyk/snyk#installation) or manually create this file with your token.")
         raise ke
+
+
+def get_token_by_env_var():
+    return os.environ.get('SNYK_TOKEN')
+
+
+def get_token():
+    t = get_token_by_env_var()
+    if not t:
+        token_file_path = get_default_token_path()
+        t = get_token_from_file(token_file_path)
+    return t
 
 
 def get_snyk_api_headers(snyk_token):
