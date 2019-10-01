@@ -4,7 +4,7 @@ import json
 import snyk
 import hashlib
 import arrow
-from utils import get_token, get_default_token_path, validate_token
+from utils import get_token, validate_token
 
 snyk_token = None
 client = None
@@ -221,9 +221,8 @@ def main(args):
     target_file = args.targetFile or ''
     origin = args.origin or ''
 
-    snyk_token_path = get_default_token_path()
     global snyk_token, client
-    snyk_token = get_token(snyk_token_path)
+    snyk_token = get_token()
     token_is_valid = validate_token(snyk_token)
     if not token_is_valid:
         raise SnykTokenInvalidError('invalid token')
