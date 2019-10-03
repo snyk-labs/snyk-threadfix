@@ -1,5 +1,4 @@
-import main
-import utils
+from snyk_threadfix import main, utils
 import tempfile
 import json
 import pytest
@@ -54,7 +53,7 @@ def test_snyk_auth_header_is_correct():
 
 
 def test_main_fails_if_token_file_does_not_exist():
-    with patch('utils.get_default_token_path',
+    with patch('snyk_threadfix.utils.get_default_token_path',
                return_value='/some/path/that/does/not/exist/snyk.json'):
         with pytest.raises(FileNotFoundError) as pytest_wrapped_exception:
             main.main(['--orgId', 'abc123', '--projectIds', '123'])
@@ -72,7 +71,7 @@ def test_main_fails_if_token_file_cant_be_parsed():
         with open(temp_token_file.name, 'w') as temp_token_file_write:
             json.dump(obj_token_json, temp_token_file_write, indent=2)
 
-        with patch('utils.get_default_token_path', return_value=temp_token_file.name):
+        with patch('snyk_threadfix.utils.get_default_token_path', return_value=temp_token_file.name):
 
             with pytest.raises(KeyError) as pytest_wrapped_exception:
                 main.main(['--orgId', 'abc123', '--projectIds', '123'])
@@ -99,8 +98,8 @@ def test_validate_token_fails_for_invalid_token():
 
 
 def test_main_fails_if_validate_token_fails():
-    with patch('utils.get_token_from_file', return_value='test-token'):
-        with patch('main.validate_token', return_value=False):
+    with patch('snyk_threadfix.utils.get_token_from_file', return_value='test-token'):
+        with patch('snyk_threadfix.main.validate_token', return_value=False):
             with pytest.raises(Exception) as pytest_wrapped_exception:
                 main.main(['--orgId', 'abc123', '--projectIds', '123'])
             assert pytest_wrapped_exception.type == main.SnykTokenInvalidError
@@ -117,7 +116,7 @@ def test_get_token_by_env_var_works(monkeypatch):
 
 
 def test_verify_token_comes_from_env_var_rather_than_file_if_both_set(monkeypatch):
-    with patch('utils.get_token_from_file', return_value='token-from-file') as get_token_from_file_mock:
+    with patch('snyk_threadfix.utils.get_token_from_file', return_value='token-from-file') as get_token_from_file_mock:
         monkeypatch.setenv('SNYK_TOKEN', 'SOME_TOKEN_FROM_ENV_VAR', prepend=False)
         t = utils.get_token()
         assert t == 'SOME_TOKEN_FROM_ENV_VAR'

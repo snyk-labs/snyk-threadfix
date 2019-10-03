@@ -5,7 +5,7 @@ import snyk
 import hashlib
 import arrow
 from sys import stderr
-from utils import get_token, validate_token
+from snyk_threadfix.utils import get_token, validate_token
 
 
 snyk_token = None

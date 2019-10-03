@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "snyk-threadfix"
-version = "0.1.0"
+version = "0.0.1"
 description = ""
 authors = ["Jeff McLean <jeff@snyk.io>"]
 license = "Apache-2.0"
@@ -13,7 +13,8 @@ pysnyk = "*"
 arrow = "*"
 
 [tool.poetry.scripts]
-snyk-threadfix = "main:run"
+snyk-threadfix = "snyk_threadfix.main:run"
+cli = "snyk_threadfix.cli:run"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.0"

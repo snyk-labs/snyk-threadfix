@@ -1,4 +1,4 @@
-import main
+from snyk_threadfix import main
 import pytest
 
 
