@@ -69,3 +69,19 @@ def test_param_parsing_project_ids_empty_list_bad():
     with pytest.raises(SystemExit) as pytest_wrapped_exception:
         args = main.parse_command_line_args(cl_args)
     assert pytest_wrapped_exception.type == SystemExit
+
+
+def test_parse_snyk_project_name_works_when_branch_names_used():
+    project_name = 'snyk-org/goof(master):package.json'
+    project_name_metadata = main.parse_snyk_project_name(project_name)
+    assert project_name_metadata['repo']
+    assert project_name_metadata['branch']
+    assert project_name_metadata['targetFile']
+
+
+def test_parse_snyk_project_name_works_when_branch_names_not_used():
+    project_name = 'snyk-org/goof:package.json'
+    project_name_metadata = main.parse_snyk_project_name(project_name)
+    assert project_name_metadata['repo']
+    assert project_name_metadata['targetFile']
+    assert 'branch' not in project_name_metadata

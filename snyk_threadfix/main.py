@@ -17,11 +17,11 @@ class SnykTokenError(Exception):
     pass
 
 
-class SnykTokenNotFoundError(Exception):
+class SnykTokenNotFoundError(SnykTokenError):
     pass
 
 
-class SnykTokenInvalidError(Exception):
+class SnykTokenInvalidError(SnykTokenError):
     pass
 
 
@@ -42,24 +42,8 @@ def parse_command_line_args(command_line_args):
     parser.add_argument('--output', type=str,
                         help='Optional: name output file to write to (should use .threadfix extension).',
                         required=False)
-
-    # ('--feature', dest='feature', action='store_true'
-
     parser.add_argument(
         "--debug", action='store_true', help="Send additional debug info to stderr", required=False)
-
-    parser.add_argument(
-        "--repoName", type=str, help="Repo name", required=False
-    )
-    parser.add_argument(
-        "--branch", type=str, help="Branch name", required=False
-    )
-    parser.add_argument(
-        "--targetFile", type=str, help="Target file (ex package.json, Dockerfile, etc", required=False
-    )
-    parser.add_argument(
-        "--origin", type=str, help="Origin - ex github, bitbucket-server, cli, etc", required=False
-    )
 
     args = parser.parse_args(command_line_args)
 
@@ -82,17 +66,24 @@ def parse_snyk_project_name(project_name):
     project_target_file = project_name.split(':')[1]
     project_repo_name = project_repo_name_and_branch.split('(')[0]
 
-    # after the '(' and before the ')'
-    project_branch_name = project_repo_name_and_branch.split('(')[1].split(')')[0]
+    project_branch_name = None
+    if '(' in project_repo_name_and_branch:
+        # after the '(' and before the ')'
+        project_branch_name = project_repo_name_and_branch.split('(')[1].split(')')[0]
 
-    return {
+    project_meta_data = {
         'repo': project_repo_name,
-        'branch': project_branch_name,
         'targetFile': project_target_file
     }
 
+    if project_branch_name:
+        project_meta_data['branch'] = project_branch_name
+
+    return project_meta_data
+
 
 def lookup_project_ids_by_repo_name_py_snyk(org_id, repo_name, origin, branch, target_file):
+    """not used, but keeping it around for possible future use"""
     git_repo_project_origins = [
         'github',
         'github-enterprise',
@@ -205,7 +196,7 @@ def create_threadfix_findings_data(org_id, project_id):
                 "snyk_project_id": project_id,
                 "snyk_project_name": p.name,
                 "snyk_repo": project_meta_data['repo'],
-                "snyk_branch": project_meta_data['branch'],
+                "snyk_branch": project_meta_data.get('branch', '(default branch)'),
                 "snyk_target_file": project_meta_data['targetFile'],
                 "snyk_project_url": p.browseUrl,
                 "snyk_organization": org_id
@@ -236,11 +227,6 @@ def main(args):
     global snyk_token, client, debug
     args = parse_command_line_args(args)
     debug = args.debug
-
-    repo_name = args.repoName
-    branch = args.branch or ''
-    target_file = args.targetFile or ''
-    origin = args.origin or ''
 
     snyk_token = get_token()
     token_is_valid = validate_token(snyk_token)
