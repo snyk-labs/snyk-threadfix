@@ -66,14 +66,20 @@ def parse_snyk_project_name(project_name):
     project_target_file = project_name.split(':')[1]
     project_repo_name = project_repo_name_and_branch.split('(')[0]
 
-    # after the '(' and before the ')'
-    project_branch_name = project_repo_name_and_branch.split('(')[1].split(')')[0]
+    project_branch_name = None
+    if '(' in project_repo_name_and_branch:
+        # after the '(' and before the ')'
+        project_branch_name = project_repo_name_and_branch.split('(')[1].split(')')[0]
 
-    return {
+    project_meta_data = {
         'repo': project_repo_name,
-        'branch': project_branch_name,
         'targetFile': project_target_file
     }
+
+    if project_branch_name:
+        project_meta_data['branch'] = project_branch_name
+
+    return project_meta_data
 
 
 def lookup_project_ids_by_repo_name_py_snyk(org_id, repo_name, origin, branch, target_file):
@@ -190,7 +196,7 @@ def create_threadfix_findings_data(org_id, project_id):
                 "snyk_project_id": project_id,
                 "snyk_project_name": p.name,
                 "snyk_repo": project_meta_data['repo'],
-                "snyk_branch": project_meta_data['branch'],
+                "snyk_branch": project_meta_data.get('branch', '(default branch)'),
                 "snyk_target_file": project_meta_data['targetFile'],
                 "snyk_project_url": p.browseUrl,
                 "snyk_organization": org_id
