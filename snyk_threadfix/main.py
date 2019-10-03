@@ -42,24 +42,8 @@ def parse_command_line_args(command_line_args):
     parser.add_argument('--output', type=str,
                         help='Optional: name output file to write to (should use .threadfix extension).',
                         required=False)
-
-    # ('--feature', dest='feature', action='store_true'
-
     parser.add_argument(
         "--debug", action='store_true', help="Send additional debug info to stderr", required=False)
-
-    parser.add_argument(
-        "--repoName", type=str, help="Repo name", required=False
-    )
-    parser.add_argument(
-        "--branch", type=str, help="Branch name", required=False
-    )
-    parser.add_argument(
-        "--targetFile", type=str, help="Target file (ex package.json, Dockerfile, etc", required=False
-    )
-    parser.add_argument(
-        "--origin", type=str, help="Origin - ex github, bitbucket-server, cli, etc", required=False
-    )
 
     args = parser.parse_args(command_line_args)
 
@@ -93,6 +77,7 @@ def parse_snyk_project_name(project_name):
 
 
 def lookup_project_ids_by_repo_name_py_snyk(org_id, repo_name, origin, branch, target_file):
+    """not used, but keeping it around for possible future use"""
     git_repo_project_origins = [
         'github',
         'github-enterprise',
@@ -236,11 +221,6 @@ def main(args):
     global snyk_token, client, debug
     args = parse_command_line_args(args)
     debug = args.debug
-
-    repo_name = args.repoName
-    branch = args.branch or ''
-    target_file = args.targetFile or ''
-    origin = args.origin or ''
 
     snyk_token = get_token()
     token_is_valid = validate_token(snyk_token)
