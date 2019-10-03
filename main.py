@@ -275,6 +275,10 @@ def main(args):
         write_to_threadfix_file(args.output, threadfix_json_obj)
 
 
-if __name__ == '__main__':
+def run():
     args = sys.argv[1:]
     main(args)
+
+
+if __name__ == '__main__':
+    run()

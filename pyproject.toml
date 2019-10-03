@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "snyk-threadfix"
+version = "0.1.0"
+description = ""
+authors = ["Jeff McLean <jeff@snyk.io>"]
+license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/snyk-labs/snyk-threadfix"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pysnyk = "*"
+arrow = "*"
+
+[tool.poetry.scripts]
+snyk-threadfix = "main:run"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.0"
+mock = "^3.0"
+requests-mock = "^1.7"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
