@@ -19,12 +19,11 @@ export SNYK_TOKEN=<your-token>
 
 ## Usage
 You must first identify your Snyk org ID. This is easy - simply log into your Snyk account, click on Settings, and find your Organization ID there. If you have multiple orgs in your Snyk account, make sure to first choose the one you want.
-![Snyk Project ID](images/project-id-in-snyk-ui.png)
+![Snyk Org ID](https://github.com/snyk-labs/snyk-threadfix/blob/master/images/snyk-org-id-in-ui.png?raw=true)
 
 
 You must also identify the Snyk project ID's for which you would like to generate ThreadFix data. You can do this using the Snyk API, for example, using the [List all projects](https://snyk.docs.apiary.io/#reference/projects/list-all-projects) endpoint. See also the [pysnyk SDK](https://github.com/snyk-labs/pysnyk). Another way of identifying the project IDs you want to use is simply by browsing to the desired project(s) with the Snyk UI and grabbing the UUID from the address bar of your browser.
-
-![Snyk Project ID](images/snyk-org-id-in-ui.png)
+![Snyk Project ID](https://github.com/snyk-labs/snyk-threadfix/blob/master/images/project-id-in-snyk-ui.png?raw=true)
 
 
 Once you have a project ID or list of project IDs that you would like to generate a threadfix file for, run the following:
