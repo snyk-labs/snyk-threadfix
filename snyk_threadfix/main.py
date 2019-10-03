@@ -5,7 +5,7 @@ import snyk
 import hashlib
 import arrow
 from sys import stderr
-from utils import get_token, validate_token
+from snyk_threadfix.utils import get_token, validate_token
 
 
 snyk_token = None
@@ -275,6 +275,10 @@ def main(args):
         write_to_threadfix_file(args.output, threadfix_json_obj)
 
 
-if __name__ == '__main__':
+def run():
     args = sys.argv[1:]
     main(args)
+
+
+if __name__ == '__main__':
+    run()
