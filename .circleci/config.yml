@@ -7,12 +7,17 @@ jobs:
     working_directory: ~/repo
     steps:
       - checkout
+
       - run:
-          name: Build and test
+          name: Check environment
           command: |
             python --version
             pip --version
             ls -la
+
+      - run:
+          name: Build and test
+          command: |
             pip install poetry
             poetry install -v
             poetry run pytest
