@@ -17,11 +17,11 @@ class SnykTokenError(Exception):
     pass
 
 
-class SnykTokenNotFoundError(Exception):
+class SnykTokenNotFoundError(SnykTokenError):
     pass
 
 
-class SnykTokenInvalidError(Exception):
+class SnykTokenInvalidError(SnykTokenError):
     pass
 
 
