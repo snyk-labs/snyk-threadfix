@@ -182,7 +182,7 @@ def create_threadfix_findings_data(org_id, project_id):
                 'library': i.package,
                 'description': 'You can find the description here: %s' % i.url,
                 'reference': i.id,
-                'referenceLink': i.url,
+                'referenceLink': "%s#issue-%s" % (p.browseUrl, i.id),
                 'filePath': target_file,
                 'version': i.version,
                 'issueType': 'VULNERABILITY',
