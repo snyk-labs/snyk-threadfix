@@ -256,9 +256,11 @@ def main(args):
         all_threadfix_findings.extend(threadfix_findings)
 
     threadfix_json_obj['findings'] = all_threadfix_findings
-    write_output_to_stdout(threadfix_json_obj)
+
     if args.output:
         write_to_threadfix_file(args.output, threadfix_json_obj)
+    else:
+        write_output_to_stdout(threadfix_json_obj)
 
 
 def run():
