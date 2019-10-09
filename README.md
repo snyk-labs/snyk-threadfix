@@ -30,17 +30,17 @@ Once you have a project ID or list of project IDs that you would like to generat
 
 *For a single project ID:*
 ```
-snyk-threadfix --orgId=<your-snyk-org-id> --projectIds=<snyk-project-id>
+snyk-threadfix --org-id=<your-snyk-org-id> --project-ids=<snyk-project-id>
 ```
 
 *For multiple IDs:*
 ```
-snyk-threadfix --orgId=<your-snyk-org-id> --projectIds=<snyk-project-id-0>,<snyk-project-id-1>,<snyk-project-id-2>,...
+snyk-threadfix --org-id=<your-snyk-org-id> --project-ids=<snyk-project-id-0>,<snyk-project-id-1>,<snyk-project-id-2>,...
 ```
 
 ThreadFix JSON data will be output to standard out. If you would like to save the JSON to a file you can either pipe it to a file or use the `--output` parameter, for example:
 ```
-snyk-threadfix --output=<your-desired-output-filename>.threadfix --orgId=<your-snyk-org-id> --projectIds=<snyk-project-id>
+snyk-threadfix --output=<your-desired-output-filename>.threadfix --org-id=<your-snyk-org-id> --project-ids=<snyk-project-id>
 ```
 
 
