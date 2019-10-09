@@ -1,10 +1,8 @@
 # snyk-threadfix
 
-This tool allows you to generate `.threadfix` file data from Snyk project data. It outputs JSON data in the ThreadFix file format - both printing to standard out and also allowing you to specify an output filename.
+The ThreadFix / Snyk integration allows you to view open source vulnerabilities identified by Snyk on the ThreadFix platform and direct you to comprehensive information and remediation guidance.
 
-It does not upload directly to ThreadFix at this time. However:
-1. We will likely do that in the future given sufficient demand
-2. There is a ThreadFix API endpoint that you can use for this: [ThreadFix Upload Scan API](https://denimgroup.atlassian.net/wiki/spaces/TDOC/pages/22908335/Upload+Scan+-+API)
+`snyk-threadfix` allows you to generate a `.threadfix` file from Snyk project data. It outputs JSON data in the ThreadFix file format - printing to standard out or a specified filename. It does not upload directly to ThreadFix at present but there is a ThreadFix API endpoint that you can use: [ThreadFix Upload Scan API](https://denimgroup.atlassian.net/wiki/spaces/TDOC/pages/22908335/Upload+Scan+-+API).
 
 ## Installation
 ```
