@@ -41,18 +41,18 @@ def test_snyk_identifiers_to_threadfix_mapping():
 
 
 def test_param_parsing_project_no_org_bad():
-    cl_args = ['--projectIds', 'id0']
+    cl_args = ['--project-ids', 'id0']
     with pytest.raises(SystemExit) as pytest_wrapped_exception:
         args = main.parse_command_line_args(cl_args)
     assert pytest_wrapped_exception.type == SystemExit
 
 
 def test_param_parsing_project_ids_list_ok():
-    cl_args = ['--orgId', '123org', '--projectIds', 'id0']
+    cl_args = ['--org-id', '123org', '--project-ids', 'id0']
     args = main.parse_command_line_args(cl_args)
     assert args.project_ids[0] == 'id0'
 
-    cl_args = ['--orgId', '123org', '--projectIds', 'id0,id1,id2']
+    cl_args = ['--org-id', '123org', '--project-ids', 'id0,id1,id2']
     args = main.parse_command_line_args(cl_args)
     assert args.project_ids[0] == 'id0'
     assert args.project_ids[1] == 'id1'
@@ -60,12 +60,12 @@ def test_param_parsing_project_ids_list_ok():
 
 
 def test_param_parsing_project_ids_empty_list_bad():
-    cl_args = ['--orgId', '123org', '--projectIds', '']
+    cl_args = ['--org-id', '123org', '--project-ids', '']
     with pytest.raises(SystemExit) as pytest_wrapped_exception:
         args = main.parse_command_line_args(cl_args)
     assert pytest_wrapped_exception.type == SystemExit
 
-    cl_args = ['--orgId', '123org', '--projectIds']
+    cl_args = ['--org-id', '123org', '--project-ids']
     with pytest.raises(SystemExit) as pytest_wrapped_exception:
         args = main.parse_command_line_args(cl_args)
     assert pytest_wrapped_exception.type == SystemExit

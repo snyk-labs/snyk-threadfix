@@ -32,12 +32,12 @@ def log(msg):
 
 
 def parse_command_line_args(command_line_args):
-    parser = argparse.ArgumentParser(description="Snyk API Examples")
+    parser = argparse.ArgumentParser(description="Generate ThreadFix file format data from Snyk")
     parser.add_argument(
-        "--orgId", type=str, help="The Snyk Organisation Id", required=True
+        "--org-id", type=str, help="The Snyk Organisation Id", required=True
     )
     parser.add_argument(
-        "--projectIds", type=str, help="Comma-separated list of Snyk project IDs", required=True
+        "--project-ids", type=str, help="Comma-separated list of Snyk project IDs", required=True
     )
     parser.add_argument('--output', type=str,
                         help='Optional: name output file to write to (should use .threadfix extension).',
@@ -47,16 +47,16 @@ def parse_command_line_args(command_line_args):
 
     args = parser.parse_args(command_line_args)
 
-    str_project_ids = args.projectIds
+    str_project_ids = args.project_ids
 
     if not str_project_ids:
-        sys.exit('--projectIds input parameter is required')
+        sys.exit('--project-ids input parameter is required')
 
     project_ids = str_project_ids.split(',')
     if len(project_ids) > 0:
         args.project_ids = project_ids
     else:
-        sys.exit('--projectIds input parameter is required')
+        sys.exit('--project-ids input parameter is required')
 
     return args
 
@@ -235,7 +235,7 @@ def main(args):
 
     client = snyk.SnykClient(snyk_token)
 
-    # project_ids = lookup_project_ids_by_repo_name_py_snyk(args.orgId, repo_name, origin, branch, target_file)
+    # project_ids = lookup_project_ids_by_repo_name_py_snyk(args.org_id, repo_name, origin, branch, target_file)
     project_ids = args.project_ids
 
     current_time = arrow.utcnow().replace(microsecond=0)
@@ -252,7 +252,7 @@ def main(args):
     all_threadfix_findings = []
 
     for p_id in project_ids:
-        threadfix_findings = create_threadfix_findings_data(args.orgId, p_id)
+        threadfix_findings = create_threadfix_findings_data(args.org_id, p_id)
         all_threadfix_findings.extend(threadfix_findings)
 
     threadfix_json_obj['findings'] = all_threadfix_findings

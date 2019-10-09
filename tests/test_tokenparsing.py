@@ -56,7 +56,7 @@ def test_main_fails_if_token_file_does_not_exist():
     with patch('snyk_threadfix.utils.get_default_token_path',
                return_value='/some/path/that/does/not/exist/snyk.json'):
         with pytest.raises(FileNotFoundError) as pytest_wrapped_exception:
-            main.main(['--orgId', 'abc123', '--projectIds', '123'])
+            main.main(['--org-id', 'abc123', '--project-ids', '123'])
         assert pytest_wrapped_exception.type == FileNotFoundError
 
 
@@ -74,7 +74,7 @@ def test_main_fails_if_token_file_cant_be_parsed():
         with patch('snyk_threadfix.utils.get_default_token_path', return_value=temp_token_file.name):
 
             with pytest.raises(KeyError) as pytest_wrapped_exception:
-                main.main(['--orgId', 'abc123', '--projectIds', '123'])
+                main.main(['--org-id', 'abc123', '--project-ids', '123'])
 
             assert pytest_wrapped_exception.type == KeyError
             assert pytest_wrapped_exception.value.args[0] == 'api'
@@ -101,7 +101,7 @@ def test_main_fails_if_validate_token_fails():
     with patch('snyk_threadfix.utils.get_token_from_file', return_value='test-token'):
         with patch('snyk_threadfix.main.validate_token', return_value=False):
             with pytest.raises(Exception) as pytest_wrapped_exception:
-                main.main(['--orgId', 'abc123', '--projectIds', '123'])
+                main.main(['--org-id', 'abc123', '--project-ids', '123'])
             assert pytest_wrapped_exception.type == main.SnykTokenInvalidError
 
 
