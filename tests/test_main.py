@@ -95,21 +95,22 @@ def test_handle_invalid_input_parameter_values_nicely(capsys):
         '--project-ids', '123'
     ]
 
-    with patch('snyk_threadfix.main.create_threadfix_findings_data', return_value=False) as create_threadfix_findings_data_mock:
-        create_threadfix_findings_data_mock.side_effect = snyk.errors.SnykNotFoundError()
+    with patch('snyk_threadfix.main.get_token', return_value='some-token'):
+        with patch('snyk_threadfix.main.validate_token', return_value=True):
+            with patch('snyk_threadfix.main.create_threadfix_findings_data', return_value=False) as create_threadfix_findings_data_mock:
+                create_threadfix_findings_data_mock.side_effect = snyk.errors.SnykNotFoundError()
 
-        main.main(cl_args)
-        captured_out = capsys.readouterr()
+                main.main(cl_args)
+                captured_out = capsys.readouterr()
 
-        assert 'Error resolving org / project(s) in Snyk. This is probably your `--org-id` or `--project-ids` parameters contains invalid value(s).' in captured_out.err
-        assert create_threadfix_findings_data_mock.call_count == 1
+                assert 'Error resolving org / project(s) in Snyk. This is probably your `--org-id` or `--project-ids` parameters contains invalid value(s).' in captured_out.err
+                assert create_threadfix_findings_data_mock.call_count == 1
 
-    with patch('snyk_threadfix.main.create_threadfix_findings_data', return_value=False) as create_threadfix_findings_data_mock:
-        create_threadfix_findings_data_mock.side_effect = snyk.errors.SnykOrganizationNotFoundError()
+            with patch('snyk_threadfix.main.create_threadfix_findings_data', return_value=False) as create_threadfix_findings_data_mock:
+                create_threadfix_findings_data_mock.side_effect = snyk.errors.SnykOrganizationNotFoundError()
 
-        main.main(cl_args)
-        captured_out = capsys.readouterr()
+                main.main(cl_args)
+                captured_out = capsys.readouterr()
 
-        assert 'Error resolving org in Snyk. This is probably because your `--org-id` parameter value is invalid.' in captured_out.err
-        assert create_threadfix_findings_data_mock.call_count == 1
-
+                assert 'Error resolving org in Snyk. This is probably because your `--org-id` parameter value is invalid.' in captured_out.err
+                assert create_threadfix_findings_data_mock.call_count == 1
