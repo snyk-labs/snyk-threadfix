@@ -4,7 +4,7 @@ import json
 import snyk
 import hashlib
 import arrow
-from sys import stderr
+import traceback
 from snyk_threadfix.utils import get_token, validate_token
 
 
@@ -28,7 +28,11 @@ class SnykTokenInvalidError(SnykTokenError):
 def log(msg):
     global debug
     if debug:
-        print(msg, file=stderr)
+        print(msg, file=sys.stderr)
+
+
+def log_error(msg):
+    print(msg, file=sys.stderr)
 
 
 def parse_command_line_args(command_line_args):
@@ -251,16 +255,27 @@ def main(args):
 
     all_threadfix_findings = []
 
-    for p_id in project_ids:
-        threadfix_findings = create_threadfix_findings_data(args.org_id, p_id)
-        all_threadfix_findings.extend(threadfix_findings)
+    try:
+        for p_id in project_ids:
+            threadfix_findings = create_threadfix_findings_data(args.org_id, p_id)
+            all_threadfix_findings.extend(threadfix_findings)
 
-    threadfix_json_obj['findings'] = all_threadfix_findings
+        threadfix_json_obj['findings'] = all_threadfix_findings
 
-    if args.output:
-        write_to_threadfix_file(args.output, threadfix_json_obj)
-    else:
-        write_output_to_stdout(threadfix_json_obj)
+        if args.output:
+            write_to_threadfix_file(args.output, threadfix_json_obj)
+        else:
+            write_output_to_stdout(threadfix_json_obj)
+
+    except snyk.errors.SnykOrganizationNotFoundError:
+        log_error('Error resolving org in Snyk. This is probably because your `--org-id` parameter value is invalid.')
+        if debug:
+            traceback.print_exc(file=sys.stderr)
+
+    except snyk.errors.SnykNotFoundError:
+        log_error('Error resolving org / project(s) in Snyk. This is probably your `--org-id` or `--project-ids` parameters contains invalid value(s).')
+        if debug:
+            traceback.print_exc(file=sys.stderr)
 
 
 def run():

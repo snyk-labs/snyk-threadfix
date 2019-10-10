@@ -1,5 +1,7 @@
 from snyk_threadfix import main
 import pytest
+import snyk
+from mock import patch
 
 
 def test_snyk_identifiers_to_threadfix_mapping():
@@ -85,3 +87,29 @@ def test_parse_snyk_project_name_works_when_branch_names_not_used():
     assert project_name_metadata['repo']
     assert project_name_metadata['targetFile']
     assert 'branch' not in project_name_metadata
+
+
+def test_handle_invalid_input_parameter_values_nicely(capsys):
+    cl_args = [
+        '--org-id', '123org',
+        '--project-ids', '123'
+    ]
+
+    with patch('snyk_threadfix.main.create_threadfix_findings_data', return_value=False) as create_threadfix_findings_data_mock:
+        create_threadfix_findings_data_mock.side_effect = snyk.errors.SnykNotFoundError()
+
+        main.main(cl_args)
+        captured_out = capsys.readouterr()
+
+        assert 'Error resolving org / project(s) in Snyk. This is probably your `--org-id` or `--project-ids` parameters contains invalid value(s).' in captured_out.err
+        assert create_threadfix_findings_data_mock.call_count == 1
+
+    with patch('snyk_threadfix.main.create_threadfix_findings_data', return_value=False) as create_threadfix_findings_data_mock:
+        create_threadfix_findings_data_mock.side_effect = snyk.errors.SnykOrganizationNotFoundError()
+
+        main.main(cl_args)
+        captured_out = capsys.readouterr()
+
+        assert 'Error resolving org in Snyk. This is probably because your `--org-id` parameter value is invalid.' in captured_out.err
+        assert create_threadfix_findings_data_mock.call_count == 1
+
