@@ -76,16 +76,24 @@ def test_param_parsing_project_ids_empty_list_bad():
 def test_parse_snyk_project_name_works_when_branch_names_used():
     project_name = 'snyk-org/goof(master):package.json'
     project_name_metadata = main.parse_snyk_project_name(project_name)
-    assert project_name_metadata['repo']
-    assert project_name_metadata['branch']
-    assert project_name_metadata['targetFile']
+    assert project_name_metadata['repo'] == 'snyk-org/goof'
+    assert project_name_metadata['branch'] == 'master'
+    assert project_name_metadata['targetFile'] == 'package.json'
 
 
 def test_parse_snyk_project_name_works_when_branch_names_not_used():
     project_name = 'snyk-org/goof:package.json'
     project_name_metadata = main.parse_snyk_project_name(project_name)
-    assert project_name_metadata['repo']
-    assert project_name_metadata['targetFile']
+    assert project_name_metadata['repo'] == 'snyk-org/goof'
+    assert project_name_metadata['targetFile'] == 'package.json'
+    assert 'branch' not in project_name_metadata
+
+
+def test_parse_snyk_project_name_works_with_custom_project_name():
+    project_name = 'custom-project-name'
+    project_name_metadata = main.parse_snyk_project_name(project_name)
+    assert 'repo' not in project_name_metadata
+    assert 'targetFile' not in project_name_metadata
     assert 'branch' not in project_name_metadata
 
 

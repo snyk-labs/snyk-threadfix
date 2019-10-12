@@ -66,6 +66,9 @@ def parse_command_line_args(command_line_args):
 
 
 def parse_snyk_project_name(project_name):
+    if len(project_name.split(':')) == 1:  # usually for custom-named CLI projects
+        return {}
+
     project_repo_name_and_branch = project_name.split(':')[0]
     project_target_file = project_name.split(':')[1]
     project_repo_name = project_repo_name_and_branch.split('(')[0]
@@ -84,38 +87,6 @@ def parse_snyk_project_name(project_name):
         project_meta_data['branch'] = project_branch_name
 
     return project_meta_data
-
-
-def lookup_project_ids_by_repo_name_py_snyk(org_id, repo_name, origin, branch, target_file):
-    """not used, but keeping it around for possible future use"""
-    git_repo_project_origins = [
-        'github',
-        'github-enterprise',
-        'gitlab',
-        'bitbucket-cloud',
-        'bitbucket-server',
-        'azure-repos'
-    ]
-
-    projects = client.organizations.get(org_id).projects.all()
-
-    matching_project_ids = []
-
-    for p in projects:
-        if p.origin in git_repo_project_origins:
-            project_name_details = parse_snyk_project_name(p.name)
-
-            if repo_name == project_name_details['repo'] and \
-                    (not branch or branch and branch == project_name_details['branch']) and \
-                    (not origin or origin and origin == p.origin) and \
-                    (not target_file or target_file and target_file == project_name_details['targetFile']):
-                log('Found project with matching repo name:')
-                log('  %s' % p.name)
-                log('  %s' % p.id)
-                log('  %s\n' % p.origin)
-                matching_project_ids.append(p.id)
-
-    return matching_project_ids
 
 
 def generate_native_id(org_id, project_id, issue_id, path_list):
@@ -165,11 +136,22 @@ def snyk_identifiers_to_threadfix_mappings(snyk_identifiers_list):
     return mappings
 
 
+git_repo_project_origins = [
+    'github',
+    'github-enterprise',
+    'gitlab',
+    'bitbucket-cloud',
+    'bitbucket-server',
+    'azure-repos'
+]
+
+
 def create_threadfix_findings_data(org_id, project_id):
     p = client.organizations.get(org_id).projects.get(project_id)
     findings = []
+
     project_meta_data = parse_snyk_project_name(p.name)
-    target_file = project_meta_data['targetFile']
+    target_file = project_meta_data.get('targetFile')
 
     for i in p.vulnerabilities:
         native_id = generate_native_id(org_id, project_id, i.id, i.fromPackages)
@@ -187,7 +169,7 @@ def create_threadfix_findings_data(org_id, project_id):
                 'description': 'You can find the description here: %s' % i.url,
                 'reference': i.id,
                 'referenceLink': "%s#issue-%s" % (p.browseUrl, i.id),
-                'filePath': target_file,
+                'filePath': target_file if target_file else '>'.join(i.fromPackages),
                 'version': i.version,
                 'issueType': 'VULNERABILITY',
             },
@@ -199,15 +181,18 @@ def create_threadfix_findings_data(org_id, project_id):
                 "snyk_source": p.origin,
                 "snyk_project_id": project_id,
                 "snyk_project_name": p.name,
-                "snyk_repo": project_meta_data['repo'],
-                "snyk_branch": project_meta_data.get('branch', '(default branch)'),
-                "snyk_target_file": project_meta_data['targetFile'],
                 "snyk_project_url": p.browseUrl,
                 "snyk_organization": org_id
             },
-
             'mappings': []
         }
+
+        if 'repo' in project_meta_data:  # note that these values also makes sense for ECR/ACR/Docker Hub to some degree
+            finding['metadata']['snyk_repo'] = project_meta_data['repo']
+            finding['metadata']['snyk_target_file'] = project_meta_data['targetFile']
+
+        if p.type in git_repo_project_origins:  # only makes sense for Git Repo sources
+            finding['metadata']['snyk_branch'] = project_meta_data.get('branch', '(default branch)')
 
         mappings = snyk_identifiers_to_threadfix_mappings(i.identifiers)
         finding['mappings'] = mappings
