@@ -146,57 +146,63 @@ git_repo_project_origins = [
 ]
 
 
+def create_finding_data(org_id, snyk_project, snyk_project_metadata, snyk_vulnerability):
+    native_id = generate_native_id(org_id, snyk_project.id, snyk_vulnerability.id, snyk_vulnerability.fromPackages)
+    target_file = snyk_project_metadata.get('targetFile')
+
+    finding = {
+        'nativeId': native_id,
+        'severity': snyk_vulnerability.severity,
+        'nativeSeverity': snyk_vulnerability.cvssScore,
+        'summary': snyk_vulnerability.title,
+        'description': 'You can find the description here: %s' % snyk_vulnerability.url,
+        'scannerDetail': 'You can find the description here: %s' % snyk_vulnerability.url,
+        'scannerRecommendation': snyk_vulnerability.url,  # TBD
+        'dependencyDetails': {
+            'library': snyk_vulnerability.package,
+            'description': 'You can find the description here: %s' % snyk_vulnerability.url,
+            'reference': snyk_vulnerability.id,
+            'referenceLink': "%s#issue-%s" % (snyk_project.browseUrl, snyk_vulnerability.id),
+            'filePath': target_file if target_file else '>'.join(snyk_vulnerability.fromPackages),
+            'version': snyk_vulnerability.version,
+            'issueType': 'VULNERABILITY',
+        },
+        'metadata': {
+            "language": snyk_vulnerability.language,  # TODO: figure out what this means for CLI/container project types
+            "packageManager": snyk_vulnerability.packageManager,  # TODO: figure out what this means for CLI/container project types
+            "CVSSv3": snyk_vulnerability.CVSSv3,
+            "cvssScore": snyk_vulnerability.cvssScore,
+            "snyk_source": snyk_project.origin,
+            "snyk_project_id": snyk_project.id,
+            "snyk_project_name": snyk_project.name,
+            "snyk_project_url": snyk_project.browseUrl,
+            "snyk_organization": org_id
+        },
+        'mappings': []
+    }
+
+    if 'repo' in snyk_project_metadata:  # note that these values also makes sense for ECR/ACR/Docker Hub to some degree
+        finding['metadata']['snyk_repo'] = snyk_project_metadata['repo']
+        finding['metadata']['snyk_target_file'] = snyk_project_metadata['targetFile']
+
+    if snyk_project.origin in git_repo_project_origins:  # only makes sense for Git Repo sources
+        finding['metadata']['snyk_branch'] = snyk_project_metadata.get('branch', '(default branch)')
+
+    mappings = snyk_identifiers_to_threadfix_mappings(snyk_vulnerability.identifiers)
+    finding['mappings'] = mappings
+
+    return finding
+
+
 def create_threadfix_findings_data(org_id, project_id):
     p = client.organizations.get(org_id).projects.get(project_id)
     findings = []
 
     project_meta_data = parse_snyk_project_name(p.name)
-    target_file = project_meta_data.get('targetFile')
 
     for i in p.vulnerabilities:
-        native_id = generate_native_id(org_id, project_id, i.id, i.fromPackages)
-
-        finding = {
-            'nativeId': native_id,
-            'severity': i.severity,
-            'nativeSeverity': i.cvssScore,
-            'summary': i.title,
-            'description': 'You can find the description here: %s' % i.url,
-            'scannerDetail': 'You can find the description here: %s' % i.url,
-            'scannerRecommendation': i.url,  # TBD
-            'dependencyDetails': {
-                'library': i.package,
-                'description': 'You can find the description here: %s' % i.url,
-                'reference': i.id,
-                'referenceLink': "%s#issue-%s" % (p.browseUrl, i.id),
-                'filePath': target_file if target_file else '>'.join(i.fromPackages),
-                'version': i.version,
-                'issueType': 'VULNERABILITY',
-            },
-            'metadata': {
-                "language": i.language,  # TODO: figure out what this means for CLI/container project types
-                "packageManager": i.packageManager,  # TODO: figure out what this means for CLI/container project types
-                "CVSSv3": i.CVSSv3,
-                "cvssScore": i.cvssScore,
-                "snyk_source": p.origin,
-                "snyk_project_id": project_id,
-                "snyk_project_name": p.name,
-                "snyk_project_url": p.browseUrl,
-                "snyk_organization": org_id
-            },
-            'mappings': []
-        }
-
-        if 'repo' in project_meta_data:  # note that these values also makes sense for ECR/ACR/Docker Hub to some degree
-            finding['metadata']['snyk_repo'] = project_meta_data['repo']
-            finding['metadata']['snyk_target_file'] = project_meta_data['targetFile']
-
-        if p.type in git_repo_project_origins:  # only makes sense for Git Repo sources
-            finding['metadata']['snyk_branch'] = project_meta_data.get('branch', '(default branch)')
-
-        mappings = snyk_identifiers_to_threadfix_mappings(i.identifiers)
-        finding['mappings'] = mappings
-        findings.append(finding)
+        finding_data = create_finding_data(org_id, p, project_meta_data, i)
+        findings.append(finding_data)
 
     return findings
 
