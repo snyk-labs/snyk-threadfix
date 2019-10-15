@@ -4,7 +4,7 @@ import json
 import snyk
 import hashlib
 import arrow
-from sys import stderr
+import traceback
 from snyk_threadfix.utils import get_token, validate_token
 
 
@@ -28,7 +28,11 @@ class SnykTokenInvalidError(SnykTokenError):
 def log(msg):
     global debug
     if debug:
-        print(msg, file=stderr)
+        print(msg, file=sys.stderr)
+
+
+def log_error(msg):
+    print(msg, file=sys.stderr)
 
 
 def parse_command_line_args(command_line_args):
@@ -62,6 +66,9 @@ def parse_command_line_args(command_line_args):
 
 
 def parse_snyk_project_name(project_name):
+    if len(project_name.split(':')) == 1:  # usually for custom-named CLI projects
+        return {}
+
     project_repo_name_and_branch = project_name.split(':')[0]
     project_target_file = project_name.split(':')[1]
     project_repo_name = project_repo_name_and_branch.split('(')[0]
@@ -80,38 +87,6 @@ def parse_snyk_project_name(project_name):
         project_meta_data['branch'] = project_branch_name
 
     return project_meta_data
-
-
-def lookup_project_ids_by_repo_name_py_snyk(org_id, repo_name, origin, branch, target_file):
-    """not used, but keeping it around for possible future use"""
-    git_repo_project_origins = [
-        'github',
-        'github-enterprise',
-        'gitlab',
-        'bitbucket-cloud',
-        'bitbucket-server',
-        'azure-repos'
-    ]
-
-    projects = client.organizations.get(org_id).projects.all()
-
-    matching_project_ids = []
-
-    for p in projects:
-        if p.origin in git_repo_project_origins:
-            project_name_details = parse_snyk_project_name(p.name)
-
-            if repo_name == project_name_details['repo'] and \
-                    (not branch or branch and branch == project_name_details['branch']) and \
-                    (not origin or origin and origin == p.origin) and \
-                    (not target_file or target_file and target_file == project_name_details['targetFile']):
-                log('Found project with matching repo name:')
-                log('  %s' % p.name)
-                log('  %s' % p.id)
-                log('  %s\n' % p.origin)
-                matching_project_ids.append(p.id)
-
-    return matching_project_ids
 
 
 def generate_native_id(org_id, project_id, issue_id, path_list):
@@ -161,53 +136,73 @@ def snyk_identifiers_to_threadfix_mappings(snyk_identifiers_list):
     return mappings
 
 
+git_repo_project_origins = [
+    'github',
+    'github-enterprise',
+    'gitlab',
+    'bitbucket-cloud',
+    'bitbucket-server',
+    'azure-repos'
+]
+
+
+def create_finding_data(org_id, snyk_project, snyk_project_metadata, snyk_vulnerability):
+    native_id = generate_native_id(org_id, snyk_project.id, snyk_vulnerability.id, snyk_vulnerability.fromPackages)
+    target_file = snyk_project_metadata.get('targetFile')
+
+    finding = {
+        'nativeId': native_id,
+        'severity': snyk_vulnerability.severity,
+        'nativeSeverity': snyk_vulnerability.cvssScore,
+        'summary': snyk_vulnerability.title,
+        'description': 'You can find the description here: %s' % snyk_vulnerability.url,
+        'scannerDetail': 'You can find the description here: %s' % snyk_vulnerability.url,
+        'scannerRecommendation': snyk_vulnerability.url,  # TBD
+        'dependencyDetails': {
+            'library': snyk_vulnerability.package,
+            'description': 'You can find the description here: %s' % snyk_vulnerability.url,
+            'reference': snyk_vulnerability.id,
+            'referenceLink': "%s#issue-%s" % (snyk_project.browseUrl, snyk_vulnerability.id),
+            'filePath': target_file if target_file else '>'.join(snyk_vulnerability.fromPackages),
+            'version': snyk_vulnerability.version,
+            'issueType': 'VULNERABILITY',
+        },
+        'metadata': {
+            "language": snyk_vulnerability.language,  # TODO: figure out what this means for CLI/container project types
+            "packageManager": snyk_vulnerability.packageManager,  # TODO: figure out what this means for CLI/container project types
+            "CVSSv3": snyk_vulnerability.CVSSv3,
+            "cvssScore": snyk_vulnerability.cvssScore,
+            "snyk_source": snyk_project.origin,
+            "snyk_project_id": snyk_project.id,
+            "snyk_project_name": snyk_project.name,
+            "snyk_project_url": snyk_project.browseUrl,
+            "snyk_organization": org_id
+        },
+        'mappings': []
+    }
+
+    if 'repo' in snyk_project_metadata:  # note that these values also makes sense for ECR/ACR/Docker Hub to some degree
+        finding['metadata']['snyk_repo'] = snyk_project_metadata['repo']
+        finding['metadata']['snyk_target_file'] = snyk_project_metadata['targetFile']
+
+    if snyk_project.origin in git_repo_project_origins:  # only makes sense for Git Repo sources
+        finding['metadata']['snyk_branch'] = snyk_project_metadata.get('branch', '(default branch)')
+
+    mappings = snyk_identifiers_to_threadfix_mappings(snyk_vulnerability.identifiers)
+    finding['mappings'] = mappings
+
+    return finding
+
+
 def create_threadfix_findings_data(org_id, project_id):
     p = client.organizations.get(org_id).projects.get(project_id)
     findings = []
+
     project_meta_data = parse_snyk_project_name(p.name)
-    target_file = project_meta_data['targetFile']
 
     for i in p.vulnerabilities:
-        native_id = generate_native_id(org_id, project_id, i.id, i.fromPackages)
-
-        finding = {
-            'nativeId': native_id,
-            'severity': i.severity,
-            'nativeSeverity': i.cvssScore,
-            'summary': i.title,
-            'description': 'You can find the description here: %s' % i.url,
-            'scannerDetail': 'You can find the description here: %s' % i.url,
-            'scannerRecommendation': i.url,  # TBD
-            'dependencyDetails': {
-                'library': i.package,
-                'description': 'You can find the description here: %s' % i.url,
-                'reference': i.id,
-                'referenceLink': "%s#issue-%s" % (p.browseUrl, i.id),
-                'filePath': target_file,
-                'version': i.version,
-                'issueType': 'VULNERABILITY',
-            },
-            'metadata': {
-                "language": i.language,  # TODO: figure out what this means for CLI/container project types
-                "packageManager": i.packageManager,  # TODO: figure out what this means for CLI/container project types
-                "CVSSv3": i.CVSSv3,
-                "cvssScore": i.cvssScore,
-                "snyk_source": p.origin,
-                "snyk_project_id": project_id,
-                "snyk_project_name": p.name,
-                "snyk_repo": project_meta_data['repo'],
-                "snyk_branch": project_meta_data.get('branch', '(default branch)'),
-                "snyk_target_file": project_meta_data['targetFile'],
-                "snyk_project_url": p.browseUrl,
-                "snyk_organization": org_id
-            },
-
-            'mappings': []
-        }
-
-        mappings = snyk_identifiers_to_threadfix_mappings(i.identifiers)
-        finding['mappings'] = mappings
-        findings.append(finding)
+        finding_data = create_finding_data(org_id, p, project_meta_data, i)
+        findings.append(finding_data)
 
     return findings
 
@@ -251,16 +246,27 @@ def main(args):
 
     all_threadfix_findings = []
 
-    for p_id in project_ids:
-        threadfix_findings = create_threadfix_findings_data(args.org_id, p_id)
-        all_threadfix_findings.extend(threadfix_findings)
+    try:
+        for p_id in project_ids:
+            threadfix_findings = create_threadfix_findings_data(args.org_id, p_id)
+            all_threadfix_findings.extend(threadfix_findings)
 
-    threadfix_json_obj['findings'] = all_threadfix_findings
+        threadfix_json_obj['findings'] = all_threadfix_findings
 
-    if args.output:
-        write_to_threadfix_file(args.output, threadfix_json_obj)
-    else:
-        write_output_to_stdout(threadfix_json_obj)
+        if args.output:
+            write_to_threadfix_file(args.output, threadfix_json_obj)
+        else:
+            write_output_to_stdout(threadfix_json_obj)
+
+    except snyk.errors.SnykOrganizationNotFoundError:
+        log_error('Error resolving org in Snyk. This is probably because your `--org-id` parameter value is invalid.')
+        if debug:
+            traceback.print_exc(file=sys.stderr)
+
+    except snyk.errors.SnykNotFoundError:
+        log_error('Error resolving org / project(s) in Snyk. This is probably your `--org-id` or `--project-ids` parameters contains invalid value(s).')
+        if debug:
+            traceback.print_exc(file=sys.stderr)
 
 
 def run():
