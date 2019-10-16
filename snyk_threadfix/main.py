@@ -163,6 +163,11 @@ def create_finding_data(org_id, snyk_project, snyk_project_metadata, snyk_vulner
     native_id = generate_native_id(org_id, snyk_project.id, snyk_vulnerability.id, snyk_vulnerability.fromPackages)
     target_file = snyk_project_metadata.get('targetFile')
 
+    file_path = target_file if target_file \
+        else '>'.join(snyk_vulnerability.fromPackages)
+
+    file_path_list = [file_path]
+
     finding = {
         'nativeId': native_id,
         'severity': snyk_vulnerability.severity,
@@ -176,7 +181,7 @@ def create_finding_data(org_id, snyk_project, snyk_project_metadata, snyk_vulner
             'description': 'You can find the description here: %s' % snyk_vulnerability.url,
             'reference': snyk_vulnerability.id,
             'referenceLink': "%s#issue-%s" % (snyk_project.browseUrl, snyk_vulnerability.id),
-            'filePath': target_file if target_file else '>'.join(snyk_vulnerability.fromPackages),
+            'filePathList': file_path_list,
             'version': snyk_vulnerability.version,
             'issueType': 'VULNERABILITY',
         },
@@ -243,7 +248,6 @@ def main(args):
 
     client = snyk.SnykClient(snyk_token)
 
-    # project_ids = lookup_project_ids_by_repo_name_py_snyk(args.org_id, repo_name, origin, branch, target_file)
     project_ids = args.project_ids
 
     current_time = arrow.utcnow().replace(microsecond=0)
