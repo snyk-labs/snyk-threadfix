@@ -425,7 +425,11 @@ def test_create_finding_data_regular_project_from_git_repo():
     assert tf_finding['dependencyDetails']['description'] == 'You can find the description here: %s' % snyk_vulnerability['url']
     assert tf_finding['dependencyDetails']['reference'] == snyk_vulnerability['id']
     assert tf_finding['dependencyDetails']['referenceLink'] == "%s#issue-%s" % (snyk_project['browseUrl'], snyk_vulnerability['id'])
-    assert tf_finding['dependencyDetails']['filePath'] == snyk_project_metadata['targetFile']
+
+    assert 'filePath' not in tf_finding['dependencyDetails']
+    assert len(tf_finding['dependencyDetails']['filePathList']) == 1
+    assert tf_finding['dependencyDetails']['filePathList'][0] == 'package.json'
+
     assert tf_finding['dependencyDetails']['version'] == snyk_vulnerability['version']
     assert tf_finding['dependencyDetails']['issueType'] == 'VULNERABILITY'
 
@@ -545,7 +549,11 @@ def test_create_finding_data_regular_project_from_cli_project_with_custom_name()
     assert tf_finding['dependencyDetails']['description'] == 'You can find the description here: %s' % snyk_vulnerability['url']
     assert tf_finding['dependencyDetails']['reference'] == snyk_vulnerability['id']
     assert tf_finding['dependencyDetails']['referenceLink'] == "%s#issue-%s" % (snyk_project['browseUrl'], snyk_vulnerability['id'])
-    assert tf_finding['dependencyDetails']['filePath'] == '>'.join(snyk_vulnerability['fromPackages'])
+
+    assert 'filePath' not in tf_finding['dependencyDetails']
+    assert len(tf_finding['dependencyDetails']['filePathList']) == 1
+    assert tf_finding['dependencyDetails']['filePathList'][0] == 'org.openapitools:openapi-generator@3.2.3>org.slf4j:slf4j-ext@1.7.12'
+
     assert tf_finding['dependencyDetails']['version'] == snyk_vulnerability['version']
     assert tf_finding['dependencyDetails']['issueType'] == 'VULNERABILITY'
 
