@@ -4,7 +4,7 @@ import snyk
 from mock import patch
 
 
-def test_snyk_identifiers_to_threadfix_mapping():
+def test_snyk_identifiers_to_threadfix_mapping_with_mpultiple_cwes_and_alternative():
     snyk_identifiers = {
         'CVE': [
             'CVE-2019-11358',
@@ -23,7 +23,7 @@ def test_snyk_identifiers_to_threadfix_mapping():
 
     assert mapping[0]['mappingType'] == 'CVE'
     assert mapping[0]['value'] == 'CVE-2019-11358'
-    assert mapping[0]['primary'] is False
+    assert mapping[0]['primary'] is True
 
     assert mapping[1]['mappingType'] == 'CVE'
     assert mapping[1]['value'] == 'CVE-2019-5428'
@@ -37,9 +37,213 @@ def test_snyk_identifiers_to_threadfix_mapping():
     assert mapping[3]['value'] == '400'
     assert mapping[3]['primary'] is False
 
-    assert mapping[4]['mappingType'] == 'ALTERNATIVE'
+    assert mapping[4]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[4]['vendorOtherType'] == 'ALTERNATIVE'
     assert mapping[4]['value'] == 'SNYK-JS-BRACES-10900'
+    assert mapping[4]['primary'] is True
+
+
+def test_snyk_identifiers_to_threadfix_mapping_with_nsp():
+    snyk_identifiers = {
+        'CVE': [
+            'CVE-2019-11358',
+            'CVE-2019-5428'
+        ],
+        'CWE': [
+            'CWE-400'
+        ],
+        'NSP': [
+            796
+        ]
+    }
+
+    mapping = main.snyk_identifiers_to_threadfix_mappings(snyk_identifiers)
+
+    assert mapping[0]['mappingType'] == 'CVE'
+    assert mapping[0]['value'] == 'CVE-2019-11358'
+    assert mapping[0]['primary'] is True
+
+    assert mapping[1]['mappingType'] == 'CVE'
+    assert mapping[1]['value'] == 'CVE-2019-5428'
+    assert mapping[1]['primary'] is False
+
+    assert mapping[2]['mappingType'] == 'CWE'
+    assert mapping[2]['value'] == '400'
+    assert mapping[2]['primary'] is True
+
+    assert mapping[3]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[3]['vendorOtherType'] == 'NSP'
+    assert mapping[3]['value'] == '796'
+    assert mapping[3]['primary'] is True
+
+
+def test_snyk_identifiers_to_threadfix_mapping_with_both_alternative_and_nsp():
+    snyk_identifiers = {
+        'CVE': [
+            'CVE-2019-11358',
+            'CVE-2019-5428'
+        ],
+        'CWE': [
+            'CWE-400'
+        ],
+        'NSP': [
+            796
+        ],
+        'ALTERNATIVE': [
+            "SNYK-JS-BRACES-10900"
+        ]
+    }
+
+    mapping = main.snyk_identifiers_to_threadfix_mappings(snyk_identifiers)
+
+    assert mapping[0]['mappingType'] == 'CVE'
+    assert mapping[0]['value'] == 'CVE-2019-11358'
+    assert mapping[0]['primary'] is True
+
+    assert mapping[1]['mappingType'] == 'CVE'
+    assert mapping[1]['value'] == 'CVE-2019-5428'
+    assert mapping[1]['primary'] is False
+
+    assert mapping[2]['mappingType'] == 'CWE'
+    assert mapping[2]['value'] == '400'
+    assert mapping[2]['primary'] is True
+
+    assert mapping[3]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[3]['vendorOtherType'] == 'ALTERNATIVE'
+    assert mapping[3]['value'] == 'SNYK-JS-BRACES-10900'
+    assert mapping[3]['primary'] is True
+
+    assert mapping[4]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[4]['vendorOtherType'] == 'NSP'
+    assert mapping[4]['value'] == '796'
+    assert mapping[4]['primary'] is False  # the "ALTERNATIVE should get marked primary
+
+
+def test_snyk_identifiers_to_threadfix_mapping_with_multiple_alternative_and_nsp():
+    snyk_identifiers = {
+        'CVE': [
+            'CVE-2019-11358',
+            'CVE-2019-5428'
+        ],
+        'CWE': [
+            'CWE-400'
+        ],
+        'NSP': [
+            796,
+            123
+        ],
+        'ALTERNATIVE': [
+            "SNYK-JS-BRACES-10900",
+            "abc123"
+        ]
+    }
+
+    mapping = main.snyk_identifiers_to_threadfix_mappings(snyk_identifiers)
+
+    assert mapping[0]['mappingType'] == 'CVE'
+    assert mapping[0]['value'] == 'CVE-2019-11358'
+    assert mapping[0]['primary'] is True
+
+    assert mapping[1]['mappingType'] == 'CVE'
+    assert mapping[1]['value'] == 'CVE-2019-5428'
+    assert mapping[1]['primary'] is False
+
+    assert mapping[2]['mappingType'] == 'CWE'
+    assert mapping[2]['value'] == '400'
+    assert mapping[2]['primary'] is True
+
+    assert mapping[3]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[3]['vendorOtherType'] == 'ALTERNATIVE'
+    assert mapping[3]['value'] == 'SNYK-JS-BRACES-10900'
+    assert mapping[3]['primary'] is True
+
+    assert mapping[4]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[4]['vendorOtherType'] == 'ALTERNATIVE'
+    assert mapping[4]['value'] == 'abc123'
     assert mapping[4]['primary'] is False
+
+    assert mapping[5]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[5]['vendorOtherType'] == 'NSP'
+    assert mapping[5]['value'] == '796'
+    assert mapping[5]['primary'] is False  # the "ALTERNATIVE should get marked primary
+
+    assert mapping[6]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[6]['vendorOtherType'] == 'NSP'
+    assert mapping[6]['value'] == '123'
+    assert mapping[6]['primary'] is False  # the "ALTERNATIVE should get marked primary
+
+
+def test_snyk_identifiers_to_threadfix_mapping_with_multiple_alternative_and_nsp_and_unknown_identifiers():
+    snyk_identifiers = {
+        'CVE': [
+            'CVE-2019-11358',
+            'CVE-2019-5428'
+        ],
+        'CWE': [
+            'CWE-400'
+        ],
+        'NSP': [
+            '796',
+            '123'
+        ],
+        'ALTERNATIVE': [
+            "SNYK-JS-BRACES-10900",
+            "abc123"
+        ],
+        'SOME_OTHER_IDENTIFIER_TYPE': [
+            'some-text-val',
+            123456
+        ]
+    }
+
+    mapping = main.snyk_identifiers_to_threadfix_mappings(snyk_identifiers)
+
+    assert mapping[0]['mappingType'] == 'CVE'
+    assert mapping[0]['value'] == 'CVE-2019-11358'
+    assert mapping[0]['primary'] is True
+
+    assert mapping[1]['mappingType'] == 'CVE'
+    assert mapping[1]['value'] == 'CVE-2019-5428'
+    assert mapping[1]['primary'] is False
+
+    assert mapping[2]['mappingType'] == 'CWE'
+    assert mapping[2]['value'] == '400'
+    assert mapping[2]['primary'] is True
+
+    assert mapping[3]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[3]['vendorOtherType'] == 'ALTERNATIVE'
+    assert mapping[3]['value'] == 'SNYK-JS-BRACES-10900'
+    assert mapping[3]['primary'] is True
+
+    assert mapping[4]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[4]['vendorOtherType'] == 'ALTERNATIVE'
+    assert mapping[4]['value'] == 'abc123'
+    assert mapping[4]['primary'] is False
+
+    assert mapping[5]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[5]['vendorOtherType'] == 'NSP'
+    assert mapping[5]['value'] == '796'
+    assert mapping[5]['primary'] is False  # the "ALTERNATIVE should get marked primary
+
+    assert mapping[6]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[6]['vendorOtherType'] == 'NSP'
+    assert mapping[6]['value'] == '123'
+    assert mapping[6]['primary'] is False  # the "ALTERNATIVE should get marked primary
+
+    assert mapping[6]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[6]['vendorOtherType'] == 'NSP'
+    assert mapping[6]['value'] == '123'
+    assert mapping[6]['primary'] is False  # the "ALTERNATIVE should get marked primary
+
+    assert mapping[7]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[7]['vendorOtherType'] == 'SOME_OTHER_IDENTIFIER_TYPE'
+    assert mapping[7]['value'] == 'some-text-val'
+    assert mapping[7]['primary'] is False  # the "ALTERNATIVE should get marked primary
+
+    assert mapping[8]['mappingType'] == 'TOOL_VENDOR'
+    assert mapping[8]['vendorOtherType'] == 'SOME_OTHER_IDENTIFIER_TYPE'
+    assert mapping[8]['value'] == '123456'
+    assert mapping[8]['primary'] is False  # the "ALTERNATIVE should get marked primary
 
 
 def test_param_parsing_project_no_org_bad():
@@ -241,7 +445,7 @@ def test_create_finding_data_regular_project_from_git_repo():
 
     assert tf_finding['mappings'][0]['mappingType'] == 'CVE'
     assert tf_finding['mappings'][0]['value'] == 'CVE-2019-11358'
-    assert tf_finding['mappings'][0]['primary'] is False
+    assert tf_finding['mappings'][0]['primary'] is True
 
     assert tf_finding['mappings'][1]['mappingType'] == 'CVE'
     assert tf_finding['mappings'][1]['value'] == 'CVE-2019-5428'
@@ -251,9 +455,10 @@ def test_create_finding_data_regular_project_from_git_repo():
     assert tf_finding['mappings'][2]['value'] == '400'
     assert tf_finding['mappings'][2]['primary'] is True
 
-    assert tf_finding['mappings'][3]['mappingType'] == 'NSP'
-    assert tf_finding['mappings'][3]['value'] == 796
-    assert tf_finding['mappings'][3]['primary'] is False
+    assert tf_finding['mappings'][3]['mappingType'] == 'TOOL_VENDOR'
+    assert tf_finding['mappings'][3]['value'] == '796'
+    assert tf_finding['mappings'][3]['vendorOtherType'] == 'NSP'
+    assert tf_finding['mappings'][3]['primary'] is True
 
 
 def test_create_finding_data_regular_project_from_cli_project_with_custom_name():
@@ -356,7 +561,7 @@ def test_create_finding_data_regular_project_from_cli_project_with_custom_name()
 
     assert tf_finding['mappings'][0]['mappingType'] == 'CVE'
     assert tf_finding['mappings'][0]['value'] == 'CVE-2018-8088'
-    assert tf_finding['mappings'][0]['primary'] is False
+    assert tf_finding['mappings'][0]['primary'] is True
 
     assert tf_finding['mappings'][1]['mappingType'] == 'CWE'
     assert tf_finding['mappings'][1]['value'] == '502'
