@@ -101,37 +101,50 @@ def generate_native_id(org_id, project_id, issue_id, path_list):
     return hashed_native_id
 
 
-def snyk_identifiers_to_threadfix_mappings(snyk_identifiers_list):
+def snyk_identifiers_to_threadfix_mappings(snyk_identifiers):
     mappings = []
+    identifier_keys = snyk_identifiers.keys()
 
-    identifier_keys = snyk_identifiers_list.keys()
-    primary_key = ''
-    primary_set = False
+    if 'CVE' in identifier_keys:
+        cve_identifiers = snyk_identifiers['CVE']
+        is_first_of_type = True
+        for i in cve_identifiers:
+            mappings.append({
+                "mappingType": 'CVE',
+                "value": i,
+                "primary": is_first_of_type
+            })
+            is_first_of_type = False
 
-    if 'CWE' in identifier_keys and snyk_identifiers_list['CWE']:
-        primary_key = 'CWE'
-    elif 'ALTERNATIVE' in identifier_keys and snyk_identifiers_list['ALTERNATIVE']:
-        primary_key = 'ALTERNATIVE'
-    elif 'CVE' in identifier_keys and snyk_identifiers_list['CVE']:
-        primary_key = 'CVE'
-    elif 'NSP' in identifier_keys and snyk_identifiers_list['NSP']:
-        primary_key = 'NSP'
+    if 'CWE' in identifier_keys:
+        cwe_identifiers = snyk_identifiers['CWE']
+        is_first_of_type = True
+        for i in cwe_identifiers:
+            mappings.append({
+                "mappingType": 'CWE',
+                "value": i.replace("CWE-", ""),
+                "primary": is_first_of_type
+            })
+            is_first_of_type = False
 
-    for k, v_list in snyk_identifiers_list.items():
-        if v_list:
-            for v in v_list:
-                is_primary = False
-                if k == primary_key and not primary_set:
-                    is_primary = True
-                    primary_set = True
+    other_identifiers = {k: v for k, v in snyk_identifiers.items() if k not in ['CVE', 'CWE']}
+    other_identifier_types = list(other_identifiers.keys())
 
-                mapping_value = v.replace("CWE-", "") if k == 'CWE' else v
+    # move 'ALTERNATIVE' to the front of the list (so it gets marked primary among TOOL_VENDOR types, if it exists)
+    if 'ALTERNATIVE' in other_identifier_types:
+        other_identifier_types.insert(0, other_identifier_types.pop(other_identifier_types.index('ALTERNATIVE')))
 
-                mappings.append({
-                    "mappingType": k,
-                    "value": mapping_value,
-                    "primary": is_primary
-                })
+    is_first_of_other = True
+    for next_identifier_type in other_identifier_types:
+        identifiers = other_identifiers[next_identifier_type]
+        for i in identifiers:
+            mappings.append({
+                "mappingType": 'TOOL_VENDOR',
+                "value": str(i),
+                "vendorOtherType": next_identifier_type,
+                "primary": is_first_of_other
+            })
+            is_first_of_other = False
 
     return mappings
 
