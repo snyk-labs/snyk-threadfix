@@ -52,16 +52,27 @@ def test_snyk_auth_header_is_correct():
     assert auth_headers['Authorization'] == 'token test-token'
 
 
-def test_main_fails_if_token_file_does_not_exist():
+def test_main_fails_if_token_not_set_in_file_or_env_var(monkeypatch, capsys):
+    monkeypatch.delenv('SNYK_TOKEN', raising=False)  # raising=True means raise an exception if this var doesn't exist to delete
+    t = utils.get_token_by_env_var()  # should return None if not set
+    assert t is None
+
     with patch('snyk_threadfix.utils.get_default_token_path',
                return_value='/some/path/that/does/not/exist/snyk.json'):
-        with pytest.raises(FileNotFoundError) as pytest_wrapped_exception:
+        with pytest.raises(SystemExit) as pytest_wrapped_exception:
             main.main(['--org-id', 'abc123', '--project-ids', '123'])
-        assert pytest_wrapped_exception.type == FileNotFoundError
+            captured_out = capsys.readouterr()
+            assert 'Error fetching Snyk token. Set SNYK_TOKEN env var or run `snyk auth <your-token>` (see https://github.com/snyk/snyk#installation).' in captured_out.err
+        assert pytest_wrapped_exception.type == SystemExit
 
 
-def test_main_fails_if_token_file_cant_be_parsed():
+def test_main_fails_if_token_file_cant_be_parsed(monkeypatch, capsys):
     """Build a temp file with an invalid spec and make the main fails properly"""
+
+    # make sure SNYK_TOKEN appears to not be set for this test (in case this test is run in an env where it is set)
+    monkeypatch.delenv('SNYK_TOKEN', raising=False)  # raising=True means raise an exception if this var doesn't exist to delete
+    t = utils.get_token_by_env_var()  # should return None if not set
+    assert t is None
 
     obj_token_json = {
         'some-invalid-key': 'test-token'
@@ -72,12 +83,12 @@ def test_main_fails_if_token_file_cant_be_parsed():
             json.dump(obj_token_json, temp_token_file_write, indent=2)
 
         with patch('snyk_threadfix.utils.get_default_token_path', return_value=temp_token_file.name):
-
-            with pytest.raises(KeyError) as pytest_wrapped_exception:
+            with pytest.raises(SystemExit) as pytest_wrapped_exception:
                 main.main(['--org-id', 'abc123', '--project-ids', '123'])
+                captured_out = capsys.readouterr()
+                assert 'Error fetching Snyk token. Set SNYK_TOKEN env var or run `snyk auth <your-token>` (see https://github.com/snyk/snyk#installation).' in captured_out.err
 
-            assert pytest_wrapped_exception.type == KeyError
-            assert pytest_wrapped_exception.value.args[0] == 'api'
+            assert pytest_wrapped_exception.type == SystemExit
 
 
 def test_validate_token():

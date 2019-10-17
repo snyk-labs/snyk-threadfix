@@ -241,7 +241,12 @@ def main(args):
     args = parse_command_line_args(args)
     debug = args.debug
 
-    snyk_token = get_token()
+    try:
+        snyk_token = get_token()
+    except Exception as e:
+        log_error('Error fetching Snyk token. Set SNYK_TOKEN env var or run `snyk auth <your-token>` (see https://github.com/snyk/snyk#installation).')
+        quit()
+
     token_is_valid = validate_token(snyk_token)
     if not token_is_valid:
         raise SnykTokenInvalidError('invalid token')
