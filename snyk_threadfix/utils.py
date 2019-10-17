@@ -14,19 +14,10 @@ def get_default_token_path():
 def get_token_from_file(token_file_path):
     path = token_file_path
 
-    try:
-        with open(path, "r") as f:
-            json_obj = json.load(f)
-            token = json_obj["api"]
-            return token
-    except FileNotFoundError as fnfe:
-        print("Snyk auth token not found at %s" % path, file=sys.stderr)
-        print("Run `snyk auth` (see https://github.com/snyk/snyk#installation) or manually create this file with your token.", file=sys.stderr)
-        raise fnfe
-    except KeyError as ke:
-        print("Snyk auth token file is not properly formed: %s" % path, file=sys.stderr)
-        print("Run `snyk auth` (see https://github.com/snyk/snyk#installation) or manually create this file with your token.", file=sys.stderr)
-        raise ke
+    with open(path, "r") as f:
+        json_obj = json.load(f)
+        token = json_obj["api"]
+        return token
 
 
 def get_token_by_env_var():
