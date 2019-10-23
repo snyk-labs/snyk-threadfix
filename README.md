@@ -44,5 +44,5 @@ snyk-threadfix --output=<your-desired-output-filename>.threadfix --org-id=<your-
 
 Additional input parameters are available:
 ```
-snyk-threadfix main.py --help
+snyk-threadfix --help
 ```
