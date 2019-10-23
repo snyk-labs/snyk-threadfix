@@ -171,7 +171,8 @@ def create_finding_data(org_id, snyk_project, snyk_project_metadata, snyk_vulner
     finding = {
         'nativeId': native_id,
         'severity': snyk_vulnerability.severity,
-        'nativeSeverity': snyk_vulnerability.cvssScore,
+        'nativeSeverity': snyk_vulnerability.severity,
+        'cvssScore': snyk_vulnerability.cvssScore,
         'summary': snyk_vulnerability.title,
         'description': 'You can find the description here: %s' % snyk_vulnerability.url,
         'scannerDetail': 'You can find the description here: %s' % snyk_vulnerability.url,

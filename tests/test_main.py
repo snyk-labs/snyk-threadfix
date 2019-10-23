@@ -415,7 +415,7 @@ def test_create_finding_data_regular_project_from_git_repo():
 
     assert tf_finding['nativeId'] == main.generate_native_id(org_id, snyk_project['id'], snyk_vulnerability['id'], snyk_vulnerability['fromPackages'])
     assert tf_finding['severity'] == snyk_vulnerability['severity']
-    assert tf_finding['nativeSeverity'] == snyk_vulnerability['cvssScore']
+    assert tf_finding['nativeSeverity'] == "medium"
     assert tf_finding['summary'] == snyk_vulnerability['title']
     assert tf_finding['description'] == 'You can find the description here: %s' % snyk_vulnerability['url']
     assert tf_finding['scannerDetail'] == 'You can find the description here: %s' % snyk_vulnerability['url']
@@ -539,7 +539,7 @@ def test_create_finding_data_regular_project_from_cli_project_with_custom_name()
 
     assert tf_finding['nativeId'] == main.generate_native_id(org_id, snyk_project['id'], snyk_vulnerability['id'], snyk_vulnerability['fromPackages'])
     assert tf_finding['severity'] == snyk_vulnerability['severity']
-    assert tf_finding['nativeSeverity'] == snyk_vulnerability['cvssScore']
+    assert tf_finding['nativeSeverity'] == "high"
     assert tf_finding['summary'] == snyk_vulnerability['title']
     assert tf_finding['description'] == 'You can find the description here: %s' % snyk_vulnerability['url']
     assert tf_finding['scannerDetail'] == 'You can find the description here: %s' % snyk_vulnerability['url']
