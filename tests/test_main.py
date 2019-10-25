@@ -1,7 +1,10 @@
 from snyk_threadfix import main
+from snyk_threadfix import __version__
 import pytest
 import snyk
 from mock import patch
+import tomlkit
+import os
 
 
 def test_snyk_identifiers_to_threadfix_mapping_with_mpultiple_cwes_and_alternative():
@@ -574,3 +577,20 @@ def test_create_finding_data_regular_project_from_cli_project_with_custom_name()
     assert tf_finding['mappings'][1]['mappingType'] == 'CWE'
     assert tf_finding['mappings'][1]['value'] == '502'
     assert tf_finding['mappings'][1]['primary'] is True
+
+
+def test_module_version_matches_pyproject_version():
+    """So we don't update the version in one place only and not both"""
+    version_from_package_init = __version__
+
+    # this is so that the test finds the pyproject.toml file when run from the command line or from within Pycharm
+    this_directory = os.path.dirname(os.path.realpath(__file__))
+    pyproject_toml_path = this_directory + '/../pyproject.toml'
+
+    with open(pyproject_toml_path) as pyproject_file:
+        pyproject_contents = pyproject_file.read()
+
+    pyproject_meta_data = tomlkit.parse(pyproject_contents)['tool']['poetry']
+    version_from_pyproject = pyproject_meta_data['version']
+
+    assert version_from_package_init == version_from_pyproject

@@ -12,6 +12,7 @@ pysnyk = "*"
 arrow = "*"
 mock = "*"
 requests-mock = "*"
+tomlkit = "*"
 
 [requires]
 python_version = "3.7"
