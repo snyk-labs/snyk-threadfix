@@ -11,6 +11,7 @@ repository = "https://github.com/snyk-labs/snyk-threadfix"
 python = "^3.7"
 arrow = "*"
 pysnyk = "^0.2.0"
+poetry-version = "^0.1.5"
 
 [tool.poetry.scripts]
 snyk-threadfix = "snyk_threadfix.main:run"

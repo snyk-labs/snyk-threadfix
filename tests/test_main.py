@@ -580,7 +580,7 @@ def test_create_finding_data_regular_project_from_cli_project_with_custom_name()
 
 
 def test_module_version_matches_pyproject_version():
-    """So we don't update the version in one place only and not both"""
+    """Verify that the __version__ in the module is being correctly pulled from the pyproject.toml config"""
     version_from_package_init = __version__
 
     # this is so that the test finds the pyproject.toml file when run from the command line or from within Pycharm
