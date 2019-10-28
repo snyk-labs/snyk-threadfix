@@ -162,12 +162,6 @@ git_repo_project_origins = [
 
 def create_finding_data(org_id, snyk_project, snyk_project_metadata, snyk_vulnerability):
     native_id = generate_native_id(org_id, snyk_project.id, snyk_vulnerability.id, snyk_vulnerability.fromPackages)
-    target_file = snyk_project_metadata.get('targetFile')
-
-    file_path = target_file if target_file \
-        else '>'.join(snyk_vulnerability.fromPackages)
-
-    file_path_list = [file_path]
 
     finding = {
         'nativeId': native_id,
@@ -183,7 +177,6 @@ def create_finding_data(org_id, snyk_project, snyk_project_metadata, snyk_vulner
             'description': 'You can find the description here: %s' % snyk_vulnerability.url,
             'reference': snyk_vulnerability.id,
             'referenceLink': "%s#issue-%s" % (snyk_project.browseUrl, snyk_vulnerability.id),
-            'filePathList': file_path_list,
             'version': snyk_vulnerability.version,
             'issueType': 'VULNERABILITY',
         },
