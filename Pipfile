@@ -12,6 +12,8 @@ pysnyk = "*"
 arrow = "*"
 mock = "*"
 requests-mock = "*"
+tomlkit = "*"
+poetry-version = "*"
 
 [requires]
 python_version = "3.7"

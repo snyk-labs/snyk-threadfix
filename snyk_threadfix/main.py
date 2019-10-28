@@ -6,6 +6,7 @@ import hashlib
 import arrow
 import traceback
 from snyk_threadfix.utils import get_token, validate_token
+from snyk_threadfix import __version__
 
 
 snyk_token = None
@@ -252,7 +253,8 @@ def main(args):
     if not token_is_valid:
         raise SnykTokenInvalidError('invalid token')
 
-    client = snyk.SnykClient(snyk_token)
+    user_agent_string = 'snyk-threadfix/%s' % __version__
+    client = snyk.SnykClient(snyk_token, user_agent=user_agent_string)
 
     project_ids = args.project_ids
 
