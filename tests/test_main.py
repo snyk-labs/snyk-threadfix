@@ -585,7 +585,7 @@ def test_module_version_matches_pyproject_version():
 
     # this is so that the test finds the pyproject.toml file when run from the command line or from within Pycharm
     this_directory = os.path.dirname(os.path.realpath(__file__))
-    pyproject_toml_path = this_directory + '/../pyproject.toml'
+    pyproject_toml_path = os.path.join(this_directory, '..', 'pyproject.toml')
 
     with open(pyproject_toml_path) as pyproject_file:
         pyproject_contents = pyproject_file.read()
