@@ -18,6 +18,9 @@ snyk-threadfix = "snyk_threadfix.main:run"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.0"
+pytest-black = "^0.3.7"
+pytest-cov = "^2.7"
+pytest-isort = "^0.3.1"
 mock = "^3.0"
 requests-mock = "^1.7"
 tomlkit = "^0.5.8"
@@ -25,3 +28,10 @@ tomlkit = "^0.5.8"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+combine_as_imports = true
+line_length = 88
