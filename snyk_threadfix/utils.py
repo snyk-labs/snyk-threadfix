@@ -1,8 +1,9 @@
-from pathlib import Path
-import requests
 import json
 import os
 import sys
+from pathlib import Path
+
+import requests
 
 
 def get_default_token_path():
@@ -21,7 +22,7 @@ def get_token_from_file(token_file_path):
 
 
 def get_token_by_env_var():
-    return os.environ.get('SNYK_TOKEN')
+    return os.environ.get("SNYK_TOKEN")
 
 
 def get_token():
@@ -33,14 +34,12 @@ def get_token():
 
 
 def get_snyk_api_headers(snyk_token):
-    snyk_api_headers = {
-        'Authorization': 'token %s' % snyk_token
-    }
+    snyk_api_headers = {"Authorization": "token %s" % snyk_token}
     return snyk_api_headers
 
 
 def validate_token(snyk_token):
     h = get_snyk_api_headers(snyk_token)
-    full_api_url = 'https://snyk.io/api/v1/'
+    full_api_url = "https://snyk.io/api/v1/"
     resp = requests.get(full_api_url, headers=h)
     return resp.ok
