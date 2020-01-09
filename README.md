@@ -1,6 +1,10 @@
 # snyk-threadfix
 
-[![CircleCI](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/master.svg?style=svg)](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/master)
+|           | master | develop |
+|:----------|:-------|:--------|
+| CI Status |[![CircleCI](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/master.svg?style=svg)](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/master)|[![CircleCI](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/develop.svg?style=svg)](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/develop)|
+
+
 
 The ThreadFix / Snyk integration allows you to view open source vulnerabilities identified by Snyk on the ThreadFix platform and direct you to comprehensive information and remediation guidance.
 
