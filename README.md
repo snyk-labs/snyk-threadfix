@@ -5,7 +5,6 @@
 | CI Status |[![CircleCI](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/master.svg?style=svg)](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/master)|[![CircleCI](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/develop.svg?style=svg)](https://circleci.com/gh/snyk-labs/snyk-threadfix/tree/develop)|
 
 
-
 The ThreadFix / Snyk integration allows you to view open source vulnerabilities identified by Snyk on the ThreadFix platform and direct you to comprehensive information and remediation guidance.
 
 `snyk-threadfix` allows you to generate a `.threadfix` file from Snyk project data. It outputs JSON data in the ThreadFix file format - printing to standard out or a specified filename. It does not upload directly to ThreadFix at present but there is a ThreadFix API endpoint that you can use: [ThreadFix Upload Scan API](https://denimgroup.atlassian.net/wiki/spaces/TDOC/pages/22908335/Upload+Scan+-+API).
