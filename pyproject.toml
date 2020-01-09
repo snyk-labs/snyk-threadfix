@@ -26,6 +26,10 @@ requests-mock = "^1.7"
 tomlkit = "^0.5.8"
 python-semantic-release = "^4.3.4"
 
+[tool.semantic_release]
+version_variable = "semantic_release/__init__.py:__version__"
+version_source = "tag"
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
