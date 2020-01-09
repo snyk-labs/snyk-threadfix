@@ -69,40 +69,11 @@ jobs:
           name: Test
           command: poetry run pytest
 
-      - run:
-          name: test semrel
-          command: |
-            git config --global user.email "${GH_USER_EMAIL}"
-            git config --global user.name "${GH_USER}"
-
-            # note running this command alone seems to produce the tag (but we still need to push it)
-            # poetry run semantic-release version -Dversion_source=${SEM_REL_VERSION_SOURCE} -Dversion_variable=${SEM_REL_VERSION_VARIABLE}
-            poetry run semantic-release version
-
-            echo "python show version after semantic-release version command:"
-            python semantic_release/__init__.py
-            new_version=$(python semantic_release/__init__.py)
-
-            if [[ $new_version == '0.0.0' ]]; then
-                echo "new_version is default value"
-                exit 0  # exit (without failing) so as to not publish
-            fi
-
-            echo "version in pyproject.toml before updating:"
-            poetry version  #show version
-
-            # update pypoetry.toml with the $new_version from semantic-release
-            poetry version $new_version
-
-            echo "version in pyproject.toml after updating:"
-            poetry version  #show version
-
-
   release:
     <<: *defaults
     steps:
       - checkout_and_install
-#      - add_ssh_keys
+      - add_ssh_keys
       - run:
           name: Release
           command: |
@@ -132,13 +103,13 @@ jobs:
             poetry version  #show version
 
             # build the package for release
-            # poetry build
+            poetry build
 
             echo "git push the new tag:"
-            # git push origin v${new_version}
+            git push origin v${new_version}
 
             # Publish package to PyPI
-            # poetry publish --username $PYPI_USERNAME --password $PYPI_PASSWORD
+            poetry publish --username $PYPI_USERNAME --password $PYPI_PASSWORD
 
 workflows:
   version: 2
