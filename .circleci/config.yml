@@ -1,29 +1,128 @@
 version: 2.1
 
-jobs:
-  build:
-    docker:
-      - image: circleci/python:3.7
-    working_directory: ~/repo
+defaults: &defaults
+  docker:
+    - image: circleci/python:3.7
+  working_directory: ~/repo
+
+commands:
+  checkout_and_install:
+    description: Checkout and install
     steps:
       - checkout
+      - run:
+          name: Install Poetry
+          command: pip install poetry
 
+      - restore_cache:
+          keys:
+            - v1-py-cache-{{ checksum "poetry.lock" }}
+
+      - run:
+          name: Install
+          command: poetry install -v
+
+      - save_cache:
+          key: v1-py-cache-{{ checksum "poetry.lock" }}
+          paths:
+            - /home/circleci/.cache/pypoetry/virtualenvs
+
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
+
+jobs:
+  build:
+    <<: *defaults
+    steps:
       - run:
           name: Check environment
           command: |
             python --version
             pip --version
-            ls -la
+      - checkout_and_install
+
+  test:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
 
       - run:
-          name: Build and test
+          name: Install Poetry
+          command: pip install poetry
+
+      - restore_cache:
+          keys:
+            - v1-py-cache-{{ checksum "poetry.lock" }}
+
+      - run:
+          name: Install dependencies
+          command: poetry install -v
+
+      - save_cache:
+          key: v1-py-cache-{{ checksum "poetry.lock" }}
+          paths:
+            - /home/circleci/.cache/pypoetry/virtualenvs
+      - run:
+          name: Test
+          command: poetry run pytest
+
+  release:
+    <<: *defaults
+    steps:
+      - checkout_and_install
+      - add_ssh_keys
+      - run:
+          name: Release
           command: |
-            pip install poetry
-            poetry install -v
-            poetry run pytest
+            # these seem to be required (by semantic-release) even when using version_source="tag"
+            git config --global user.email "${GH_USER_EMAIL}"
+            git config --global user.name "${GH_USER}"
+
+            # note running this command alone seems to produce the tag (but we still need to push it)
+            poetry run semantic-release version
+
+            echo "python show version after semantic-release version command:"
+            python semantic_release/__init__.py
+            new_version=$(python semantic_release/__init__.py)
+
+            if [[ $new_version == '0.0.0' ]]; then
+                echo "new_version is default value"
+                exit 0  # exit (without failing) so as to not publish
+            fi
+
+            echo "version in pyproject.toml before updating:"
+            poetry version  #show version
+
+            # update pypoetry.toml with the $new_version from semantic-release
+            poetry version $new_version
+
+            echo "version in pyproject.toml after updating:"
+            poetry version  #show version
+
+            # build the package for release
+            poetry build
+
+            echo "git push the new tag:"
+            git push origin v${new_version}
+
+            # Publish package to PyPI
+            poetry publish --username $PYPI_USERNAME --password $PYPI_PASSWORD
 
 workflows:
   version: 2
-  build_and_test:
+  build_test_release:
     jobs:
       - build
+      - test:
+          requires:
+            - build
+      - release:
+          requires:
+            - build
+            - test
+          filters:
+            branches:
+              only: master
