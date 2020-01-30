@@ -6,31 +6,19 @@ defaults: &defaults
   working_directory: ~/repo
 
 commands:
-  checkout_and_install:
-    description: Checkout and install
+  install_deps:
+    description: Install and cache dependencies
     steps:
-      - checkout
-      - run:
-          name: Install Poetry
-          command: pip install poetry
-
       - restore_cache:
           keys:
             - v1-py-cache-{{ checksum "poetry.lock" }}
-
       - run:
           name: Install
           command: poetry install -v
-
       - save_cache:
           key: v1-py-cache-{{ checksum "poetry.lock" }}
           paths:
             - /home/circleci/.cache/pypoetry/virtualenvs
-
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .
 
 jobs:
   build:
@@ -41,38 +29,59 @@ jobs:
           command: |
             python --version
             pip --version
-      - checkout_and_install
+      - checkout
+      - install_deps
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .
 
   test:
     <<: *defaults
     steps:
       - attach_workspace:
           at: ~/repo
-
-      - run:
-          name: Install Poetry
-          command: pip install poetry
-
-      - restore_cache:
-          keys:
-            - v1-py-cache-{{ checksum "poetry.lock" }}
-
-      - run:
-          name: Install dependencies
-          command: poetry install -v
-
-      - save_cache:
-          key: v1-py-cache-{{ checksum "poetry.lock" }}
-          paths:
-            - /home/circleci/.cache/pypoetry/virtualenvs
+      - install_deps
       - run:
           name: Test
           command: poetry run pytest
 
+  test_deps:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+          at: ~/repo
+      - install_deps
+      - run:
+          name: Test dependencies for security issues
+          command: |
+            # export requirements.txt from pyproject.toml into temp location
+            mkdir dependencies-check
+            poetry export -f requirements.txt --without-hashes > dependencies-check/requirements.txt
+            cd dependencies-check
+
+            # test dependencies with Snyk
+            latest_version=$(curl -Is "https://github.com/snyk/snyk/releases/latest" | grep "Location" | sed s#.*tag/##g | tr -d "\r")
+            snyk_cli_dl_linux="https://github.com/snyk/snyk/releases/download/${latest_version}/snyk-linux"
+            curl -Lo ./snyk $snyk_cli_dl_linux
+            chmod +x ./snyk
+            pip install -r requirements.txt
+            ./snyk test --file=requirements.txt --severity-threshold=high
+
   release:
     <<: *defaults
     steps:
-      - checkout_and_install
+      - attach_workspace:
+          at: ~/repo
+
+      # this is so that I don't have to do a `checkout` to be able to push the git tag
+      - run:
+          name: Add github.com to known_hosts
+          command: |
+            mkdir ~/.ssh
+            ssh-keyscan github.com > ~/.ssh/known_hosts
+
+      - install_deps
       - add_ssh_keys
       - run:
           name: Release
@@ -81,7 +90,6 @@ jobs:
             git config --global user.email "${GH_USER_EMAIL}"
             git config --global user.name "${GH_USER}"
 
-            # note running this command alone seems to produce the tag (but we still need to push it)
             poetry run semantic-release version
 
             echo "python show version after semantic-release version command:"
@@ -109,7 +117,7 @@ jobs:
             git push origin v${new_version}
 
             # Publish package to PyPI
-            poetry publish --username $PYPI_USERNAME --password $PYPI_PASSWORD
+            poetry publish --username __token__ --password $PYPI_TOKEN
 
 workflows:
   version: 2
@@ -119,10 +127,14 @@ workflows:
       - test:
           requires:
             - build
-      - release:
+      - test_deps:
           requires:
             - build
+      - release:
+          context: pypi-release-snyk-threadfix
+          requires:
             - test
+            - test_deps
           filters:
             branches:
               only: master
