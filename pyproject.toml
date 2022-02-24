@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "snyk-threadfix"
-version = "0.0.4"
+version = "0.0.5"
 description = ""
 authors = ["Jeff McLean <jeff@snyk.io>"]
 license = "Apache-2.0"
