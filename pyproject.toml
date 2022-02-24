@@ -10,21 +10,20 @@ repository = "https://github.com/snyk-labs/snyk-threadfix"
 [tool.poetry.dependencies]
 python = "^3.7"
 arrow = "*"
-pysnyk = "^0.2.0"
-poetry-version = "^0.1.5"
+pysnyk = "^0.8.0"
 
 [tool.poetry.scripts]
 snyk-threadfix = "snyk_threadfix.main:run"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.0"
+pytest = "^6.2.5"
 pytest-black = "^0.3.7"
-pytest-cov = "^2.7"
-pytest-isort = "^0.3.1"
+pytest-cov = "^3.0.0"
+pytest-isort = "^3.0.0"
 mock = "^3.0"
 requests-mock = "^1.7"
-tomlkit = "^0.5.8"
-python-semantic-release = "^4.3.4"
+tomlkit = "^0.7.0"
+python-semantic-release = "^7.24.0"
 
 [tool.semantic_release]
 version_variable = "semantic_release/__init__.py:__version__"

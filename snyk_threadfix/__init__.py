@@ -1,3 +1,3 @@
-import poetry_version
+import importlib.metadata
 
-__version__ = poetry_version.extract(source_file=__file__)
+__version__ = importlib.metadata.version("snyk-threadfix")
