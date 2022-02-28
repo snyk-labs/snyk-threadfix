@@ -1,3 +1,3 @@
-import importlib.metadata
+from importlib_metadata import version
 
-__version__ = importlib.metadata.version("snyk-threadfix")
+__version__ = version("snyk-threadfix")
