@@ -1,3 +1,4 @@
+---
 version: 2.1
 
 defaults: &defaults
@@ -61,7 +62,7 @@ jobs:
             cd dependencies-check
 
             # test dependencies with Snyk
-            latest_version=$(curl -Is "https://github.com/snyk/snyk/releases/latest" | grep "Location" | sed s#.*tag/##g | tr -d "\r")
+            latest_version=$(curl -Is "https://github.com/snyk/snyk/releases/latest" | grep -i "^location:" | sed s#.*tag/##g | tr -d "\r")
             snyk_cli_dl_linux="https://github.com/snyk/snyk/releases/download/${latest_version}/snyk-linux"
             curl -Lo ./snyk $snyk_cli_dl_linux
             chmod +x ./snyk
@@ -102,13 +103,13 @@ jobs:
             fi
 
             echo "version in pyproject.toml before updating:"
-            poetry version  #show version
+            poetry version  # show version
 
             # update pypoetry.toml with the $new_version from semantic-release
             poetry version $new_version
 
             echo "version in pyproject.toml after updating:"
-            poetry version  #show version
+            poetry version  # show version
 
             # build the package for release
             poetry build
